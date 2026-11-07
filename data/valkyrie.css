@@ -1,0 +1,97 @@
+/* Valkyrie — application stylesheet (embedded via include_str!).
+
+   Icon view: GTK paints the selection on the whole stretched grid
+   cell ("gridview > child"), which reads as a giant blue block with
+   dead space around the icon. We clear the cell-level selection/hover
+   background on our grid and paint it on the item box itself — the
+   factory toggles the .selected class from ListItem::selected. The
+   theme also gives every cell box a 12 px margin; we tighten it so
+   icons pack closer together. */
+
+/* Clear the stretched-cell hover background so it does not paint a
+   giant block around the icon. Keep child:selected visible with a
+   subtle highlight so GTK's rubberband drag-select shows a live
+   preview of which items will be selected. The strong selection
+   color is painted by .file-cell.selected below. */
+.valkyrie-icons > child:hover {
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+}
+.valkyrie-icons > child:selected {
+  background-color: alpha(#3584e4, 0.25);
+  box-shadow: none;
+  color: inherit;
+}
+
+/* The dead space between items must live OUTSIDE the cells.
+   border-spacing on the grid separates the tiles themselves — the
+   strip between two neighbors then belongs to no item: a click there
+   hits the grid background (clears the selection / starts the rubber
+   band) instead of activating a neighbor. The cell margin only
+   tightens the visuals inside each tile. */
+.valkyrie-icons {
+  /* Real tile separation: this strip between tiles is the only true
+     dead zone (clicks clear the selection / start the rubber band)
+     because GTK resolves cell hits by nearest tile. Kept deliberately
+     slim — wider values looked like spacing bugs to users. */
+  border-spacing: 8px;
+}
+
+.valkyrie-icons > child {
+  /* The stock theme pads every cell 3px — invisible slack that
+     inflates the column pitch at every zoom level. */
+  margin: 0;
+  padding: 0;
+}
+
+.file-cell {
+  border-radius: 8px;
+  padding: 2px 6px;
+  /* The stock theme gives every grid child box a 12px margin and an
+     8px border-spacing — invisible space that inflates the column
+     pitch and spreads the cards far apart. */
+  margin: 0;
+  border-spacing: 0;
+}
+
+.file-cell:hover {
+  background-color: alpha(currentColor, 0.10);
+}
+
+/* Match the theme's selection accent (same values the default theme
+   uses for gridview children; @accent_* vars are not guaranteed to
+   exist on plain GTK4 themes). */
+.file-cell.selected {
+  background-color: #3584e4;
+  color: #ffffff;
+}
+
+/* Rubberband selection rectangle — visible while the user drags the
+   mouse over empty space to select multiple files. GTK4's default
+   theme styles this, but some themes render it nearly invisible.
+   Explicit styling ensures the drag-select rectangle is always
+   clearly visible, matching the selection accent. */
+.valkyrie-icons rubberband,
+columnview rubberband {
+  border: 1px solid #3584e4;
+  background-color: alpha(#3584e4, 0.2);
+}
+
+/* Custom rubber-band rectangle drawn on the view overlay while the
+   user drag-selects (src/rubberband.rs). */
+.rubberband-rect {
+  background-color: alpha(#3584e4, 0.25);
+  border: 1px solid #3584e4;
+}
+
+/* Elevated root instance (pkexec-spawned, src/context_menu.rs):
+   unmistakable red frame around the whole window plus a tinted
+   menu bar so the admin session is visually obvious. */
+window.elevated .elevated-frame {
+  border: 3px solid #e01b24;
+}
+window.elevated menubar {
+  background-color: #a51d2d;
+  color: #ffffff;
+}

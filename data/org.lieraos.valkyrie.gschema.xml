@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.lieraos.valkyrie" path="/org/lieraos/valkyrie/">
+    <key name="view-mode" type="s">
+      <default>'icons'</default>
+      <summary>Default file view mode</summary>
+      <description>"list" for the details view, "icons" for the icon grid.</description>
+    </key>
+    <key name="show-hidden" type="b">
+      <default>false</default>
+      <summary>Show hidden files</summary>
+      <description>Whether dotfiles and GVFS-hidden entries are visible.</description>
+    </key>
+    <key name="sort-field" type="s">
+      <default>'name'</default>
+      <summary>Sort field</summary>
+      <description>One of "name", "size", "type", "modified".</description>
+    </key>
+    <key name="sort-descending" type="b">
+      <default>false</default>
+      <summary>Reverse sort order</summary>
+      <description>Sort descending instead of ascending; directories stay first.</description>
+    </key>
+    <key name="icon-size" type="i">
+      <range min="16" max="320"/>
+      <default>80</default>
+      <summary>Default icon size in pixels</summary>
+      <description>Fallback icon size for directories without a saved zoom level (saved per directory in GVFS metadata).</description>
+    </key>
+    <key name="terminal-command" type="s">
+      <default>''</default>
+      <summary>Terminal emulator override</summary>
+      <description>Executable used for "Open in Terminal". Empty means automatic detection.</description>
+    </key>
+    <key name="nextcloud-server" type="s">
+      <default>''</default>
+      <summary>Cloud server URL (WebDAV)</summary>
+      <description>WebDAV server of the user's cloud: a bare host uses the Nextcloud/ownCloud convention (/remote.php/dav/files/&lt;user&gt;), a URL with path is used verbatim as the DAV endpoint. The app password is never stored here — it lives in the system keyring.</description>
+    </key>
+    <key name="nextcloud-user" type="s">
+      <default>''</default>
+      <summary>Cloud username</summary>
+      <description>Login name on the configured WebDAV server.</description>
+    </key>
+    <key name="nextcloud-sync-folders" type="a(sssi)">
+      <default>[]</default>
+      <summary>Cloud synced folder pairs</summary>
+      <description>Each tuple is (local path, remote path, direction, schedule): direction 0 = upload only, 1 = two-way; schedule -1 = live watch, 0 = manual only, &gt;0 = interval in minutes.</description>
+    </key>
+    <key name="verify-copies" type="b">
+      <default>false</default>
+      <summary>Verify integrity of copied files</summary>
+      <description>Default state of the "Verify integrity" checkbox in the copy progress dialog. When enabled, each copied file is hashed (BLAKE3) and the destination re-read for comparison; reflink copies skip verification because they share extents by construction.</description>
+    </key>
+    <key name="copy-parallel" type="b">
+      <default>false</default>
+      <summary>Copy files with a worker pool</summary>
+      <description>When enabled, file payloads of a copy batch are copied by multiple worker threads (walk, directory creation and conflict resolution stay sequential). Helps most on SSDs/NVMe with many small files; rotating disks and network mounts can get slower.</description>
+    </key>
+    <key name="copy-workers" type="i">
+      <range min="1" max="64"/>
+      <default>4</default>
+      <summary>Number of parallel copy workers</summary>
+      <description>Worker threads used for parallel copying; the UI caps this at the machine's CPU core count.</description>
+    </key>
+    <key name="terminal-panel-visible" type="b">
+      <default>false</default>
+      <summary>Show the embedded terminal panel</summary>
+      <description>Whether the embedded terminal (View menu, F4) is open at the bottom of the window.</description>
+    </key>
+    <key name="terminal-panel-height" type="i">
+      <range min="80" max="2000"/>
+      <default>240</default>
+      <summary>Embedded terminal height</summary>
+      <description>Pixel height of the embedded terminal panel; restored on next show.</description>
+    </key>
+    <key name="secure-delete" type="b">
+      <default>false</default>
+      <summary>Overwrite files before permanently deleting them</summary>
+      <description>When enabled, permanent deletion (Shift+Delete / "Delete permanently") overwrites every regular file with random data before unlinking it. Best-effort privacy on HDDs; not a guarantee on SSDs or copy-on-write filesystems.</description>
+    </key>
+    <key name="secure-delete-passes" type="i">
+      <range min="1" max="7"/>
+      <default>3</default>
+      <summary>Number of overwrite passes for secure delete</summary>
+      <description>How many times file content is overwritten before permanent deletion.</description>
+    </key>
+    <key name="thumbnails-images-mode" type="s">
+      <default>'always'</default>
+      <summary>Image thumbnail policy: always, limit or never</summary>
+    </key>
+    <key name="thumbnails-images-max-mb" type="u">
+      <default>20</default>
+    </key>
+    <key name="thumbnails-videos-mode" type="s">
+      <default>'always'</default>
+    </key>
+    <key name="thumbnails-videos-max-mb" type="u">
+      <default>20</default>
+    </key>
+    <key name="thumbnails-pdfs-mode" type="s">
+      <default>'always'</default>
+    </key>
+    <key name="thumbnails-pdfs-max-mb" type="u">
+      <default>20</default>
+    </key>
+    <key name="context-menu-hidden" type="as">
+      <default>[]</default>
+      <summary>Context menu entries hidden by the user</summary>
+      <description>Entry ids the user hid via Preferences → Context menu. Applies wherever the entry exists.</description>
+    </key>
+    <key name="bookmarks" type="as">
+      <default>[]</default>
+      <summary>User bookmarks shown in the sidebar</summary>
+      <description>URIs of bookmarked locations, in display order.</description>
+    </key>
+  </schema>
+</schemalist>

@@ -1,0 +1,916 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-26 04:10+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: src/archive_ui.rs:37
+msgid "Extraction failed"
+msgstr ""
+
+#: src/archive_ui.rs:39 src/archive_ui.rs:169 src/window_actions.rs:173
+msgid "OK"
+msgstr ""
+
+#: src/archive_ui.rs:66
+msgid "Create Archive"
+msgstr ""
+
+#: src/archive_ui.rs:83
+msgid "Archive name:"
+msgstr ""
+
+#: src/archive_ui.rs:93
+msgid "Format:"
+msgstr ""
+
+#: src/archive_ui.rs:107 src/conflict.rs:97 src/create_entry.rs:132
+#: src/open_with.rs:165 src/progress.rs:153 src/trash_actions.rs:122
+#: src/nextcloud/dialog.rs:75 src/nextcloud/folders_ui.rs:219
+msgid "Cancel"
+msgstr ""
+
+#: src/archive_ui.rs:108 src/create_entry.rs:60 src/create_entry.rs:81
+msgid "Create"
+msgstr ""
+
+#: src/archive_ui.rs:167
+msgid "Compression failed"
+msgstr ""
+
+#: src/browser_tab.rs:70 src/pane_view.rs:53
+msgid "Back"
+msgstr ""
+
+#: src/browser_tab.rs:71 src/pane_view.rs:54
+msgid "Forward"
+msgstr ""
+
+#: src/browser_tab.rs:72 src/pane_view.rs:55
+msgid "Go to parent folder"
+msgstr ""
+
+#: src/browser_tab.rs:89
+msgid "Toggle icon view"
+msgstr ""
+
+#: src/browser_tab.rs:97 src/menubar.rs:73
+msgid "Search"
+msgstr ""
+
+#: src/browser_tab.rs:153 src/zoom.rs:27
+msgid "Zoom"
+msgstr ""
+
+#: src/browser_tab.rs:365 src/window.rs:60
+msgid "Valkyrie"
+msgstr ""
+
+#: src/conflict.rs:56
+msgid "Name conflict"
+msgstr ""
+
+#: src/conflict.rs:65
+msgid "A folder with this name already exists"
+msgstr ""
+
+#: src/conflict.rs:67
+msgid "A file with this name already exists"
+msgstr ""
+
+#: src/conflict.rs:77
+msgid "Existing"
+msgstr ""
+
+#: src/conflict.rs:81 src/settings_dialog.rs:229
+#: src/context_menu/background.rs:30
+msgid "New"
+msgstr ""
+
+#: src/conflict.rs:93 src/menubar.rs:77 src/rename.rs:28 src/rename.rs:30
+#: src/settings_dialog.rs:212
+msgid "Rename"
+msgstr ""
+
+#: src/conflict.rs:95
+msgid "Apply to all conflicts"
+msgstr ""
+
+#: src/conflict.rs:98
+msgid "Skip"
+msgstr ""
+
+#: src/conflict.rs:222
+msgid "Modified:"
+msgstr ""
+
+#: src/conflict.rs:240
+msgid "Created:"
+msgstr ""
+
+#: src/context_menu.rs:143 src/open_with.rs:171 src/sidebar/devices.rs:192
+msgid "Open"
+msgstr ""
+
+#: src/context_menu.rs:151 src/settings_dialog.rs:202 src/sidebar.rs:351
+msgid "Open in New Tab"
+msgstr ""
+
+#: src/context_menu.rs:158 src/settings_dialog.rs:203 src/sidebar.rs:359
+msgid "Open in New Window"
+msgstr ""
+
+#: src/context_menu.rs:167 src/open_with.rs:68 src/settings_dialog.rs:204
+msgid "Open With"
+msgstr ""
+
+#: src/context_menu.rs:174
+msgid "Restore"
+msgstr ""
+
+#: src/context_menu.rs:179 src/context_menu.rs:281 src/settings_dialog.rs:217
+msgid "Delete Permanently"
+msgstr ""
+
+#: src/context_menu.rs:189 src/settings_dialog.rs:205
+#: src/context_menu/background.rs:71
+msgid "Open as Administrator"
+msgstr ""
+
+#: src/context_menu.rs:197 src/settings_dialog.rs:206 src/sidebar.rs:369
+msgid "Open in Terminal"
+msgstr ""
+
+#: src/context_menu.rs:203 src/settings_dialog.rs:207
+#: src/context_menu/background.rs:64
+msgid "Open Terminal Panel"
+msgstr ""
+
+#: src/context_menu.rs:213 src/menubar.rs:55 src/settings_dialog.rs:208
+msgid "Cut"
+msgstr ""
+
+#: src/context_menu.rs:220 src/menubar.rs:56 src/settings_dialog.rs:209
+msgid "Copy"
+msgstr ""
+
+#: src/context_menu.rs:227 src/settings_dialog.rs:210
+msgid "Copy Path"
+msgstr ""
+
+#: src/context_menu.rs:237
+msgid "Upload to Cloud…"
+msgstr ""
+
+#: src/context_menu.rs:248
+msgid "Sync with Cloud…"
+msgstr ""
+
+#: src/context_menu.rs:263
+msgid "Rename…"
+msgstr ""
+
+#: src/context_menu.rs:271 src/menubar.rs:78 src/settings_dialog.rs:216
+msgid "Move to Trash"
+msgstr ""
+
+#: src/context_menu.rs:294
+msgid "Remove Bookmark"
+msgstr ""
+
+#: src/context_menu.rs:296
+msgid "Add Bookmark"
+msgstr ""
+
+#: src/context_menu.rs:316 src/settings_dialog.rs:214
+msgid "Extract Here"
+msgstr ""
+
+#: src/context_menu.rs:323 src/settings_dialog.rs:215
+#: src/context_menu/background.rs:87
+msgid "Compress…"
+msgstr ""
+
+#: src/context_menu.rs:331 src/menubar.rs:40 src/properties.rs:42
+#: src/context_menu/background.rs:128
+msgid "Properties"
+msgstr ""
+
+#: src/context_menu.rs:340
+msgid "Empty Trash…"
+msgstr ""
+
+#: src/create_entry.rs:58 src/create_entry.rs:59 src/menubar.rs:35
+msgid "New Folder"
+msgstr ""
+
+#: src/create_entry.rs:76
+msgid "Untitled Document"
+msgstr ""
+
+#: src/create_entry.rs:79 src/menubar.rs:36
+msgid "New Document"
+msgstr ""
+
+#: src/create_entry.rs:183 src/create_entry.rs:199 src/create_entry.rs:213
+#: src/properties.rs:105
+msgid "Permissions"
+msgstr ""
+
+#: src/file_object.rs:199 src/properties.rs:305
+#: src/context_menu/background.rs:33
+msgid "Folder"
+msgstr ""
+
+#: src/menubar.rs:18
+msgid "_File"
+msgstr ""
+
+#: src/menubar.rs:19
+msgid "_Edit"
+msgstr ""
+
+#: src/menubar.rs:20
+msgid "_View"
+msgstr ""
+
+#: src/menubar.rs:21
+msgid "_Help"
+msgstr ""
+
+#: src/menubar.rs:30
+msgid "New Tab"
+msgstr ""
+
+#: src/menubar.rs:31
+msgid "New Window"
+msgstr ""
+
+#: src/menubar.rs:44
+msgid "Quit"
+msgstr ""
+
+#: src/menubar.rs:57 src/settings_dialog.rs:230
+#: src/context_menu/background.rs:79
+msgid "Paste"
+msgstr ""
+
+#: src/menubar.rs:62 src/context_menu/xfer.rs:31
+msgid "Copy to Other Pane"
+msgstr ""
+
+#: src/menubar.rs:66 src/context_menu/xfer.rs:37
+msgid "Move to Other Pane"
+msgstr ""
+
+#: src/menubar.rs:72 src/settings_dialog.rs:231
+#: src/context_menu/background.rs:105
+msgid "Select All"
+msgstr ""
+
+#: src/menubar.rs:82 src/settings_dialog.rs:68
+msgid "Preferences"
+msgstr ""
+
+#: src/menubar.rs:93 src/settings_dialog.rs:125
+msgid "Icon View"
+msgstr ""
+
+#: src/menubar.rs:94 src/settings_dialog.rs:125
+msgid "List View"
+msgstr ""
+
+#: src/menubar.rs:98 src/properties.rs:142 src/settings_dialog.rs:312
+#: src/view_widgets.rs:41 src/context_menu/background.rs:157
+msgid "Name"
+msgstr ""
+
+#: src/menubar.rs:99 src/properties.rs:160 src/settings_dialog.rs:312
+#: src/view_widgets.rs:71 src/context_menu/background.rs:158
+msgid "Size"
+msgstr ""
+
+#: src/menubar.rs:100 src/settings_dialog.rs:312 src/view_widgets.rs:88
+#: src/context_menu/background.rs:159
+msgid "Type"
+msgstr ""
+
+#: src/menubar.rs:101 src/properties.rs:168 src/view_widgets.rs:105
+#: src/context_menu/background.rs:160
+msgid "Modified"
+msgstr ""
+
+#: src/menubar.rs:102 src/context_menu/background.rs:148
+msgid "Reversed Order"
+msgstr ""
+
+#: src/menubar.rs:104 src/settings_dialog.rs:232
+#: src/context_menu/background.rs:111
+msgid "Arrange Items"
+msgstr ""
+
+#: src/menubar.rs:108 src/settings_dialog.rs:160 src/settings_dialog.rs:233
+#: src/context_menu/background.rs:119
+msgid "Show Hidden Files"
+msgstr ""
+
+#: src/menubar.rs:112
+msgid "Split View"
+msgstr ""
+
+#: src/menubar.rs:113
+msgid "Terminal Panel"
+msgstr ""
+
+#: src/menubar.rs:117
+msgid "Reload"
+msgstr ""
+
+#: src/menubar.rs:127
+msgid "About Valkyrie"
+msgstr ""
+
+#: src/mode_editor.rs:67
+msgid "Read"
+msgstr ""
+
+#: src/mode_editor.rs:67
+msgid "Write"
+msgstr ""
+
+#: src/mode_editor.rs:67
+msgid "Execute"
+msgstr ""
+
+#: src/mode_editor.rs:98 src/properties_perms.rs:58
+msgid "Owner"
+msgstr ""
+
+#: src/mode_editor.rs:98 src/properties_perms.rs:59
+msgid "Group"
+msgstr ""
+
+#: src/mode_editor.rs:98
+msgid "Others"
+msgstr ""
+
+#: src/mode_editor.rs:129
+msgid "Octal"
+msgstr ""
+
+#: src/mount_ops.rs:87
+msgid "Could not mount the volume"
+msgstr ""
+
+#: src/mount_ops.rs:108
+msgid "Could not unmount the volume"
+msgstr ""
+
+#: src/mount_ops.rs:127
+msgid "Could not eject the volume"
+msgstr ""
+
+#: src/nextcloud.rs:170
+msgid "Could not connect to cloud server"
+msgstr ""
+
+#: src/open_with.rs:44
+msgid "Other Application…"
+msgstr ""
+
+#: src/open_with.rs:153
+msgid "Always use for"
+msgstr ""
+
+#: src/open_with.rs:212
+msgid "this file type"
+msgstr ""
+
+#: src/operations.rs:130
+msgid "Could not move to trash"
+msgstr ""
+
+#: src/operations.rs:142 src/operations.rs:145
+msgid "This item will be deleted permanently. This cannot be undone."
+msgid_plural "These items will be deleted permanently. This cannot be undone."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/operations.rs:150 src/trash_actions.rs:78
+msgid "Delete permanently?"
+msgstr ""
+
+#: src/operations.rs:249
+msgid "File operation failed"
+msgstr ""
+
+#: src/operations.rs:263
+msgid "File operation finished"
+msgstr ""
+
+#: src/progress.rs:136
+msgid "Verify integrity"
+msgstr ""
+
+#: src/progress.rs:138
+msgid "Hash each copied file and compare it with the source (BLAKE3)"
+msgstr ""
+
+#: src/progress.rs:240
+msgid "Integrity check failed for %d file"
+msgid_plural "Integrity check failed for %d files"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/progress.rs:250
+msgid "Integrity verified for %d file"
+msgid_plural "Integrity verified for %d files"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/progress.rs:273
+msgid "verifying…"
+msgstr ""
+
+#: src/progress.rs:335
+msgid "%d/%d verified"
+msgstr ""
+
+#: src/progress.rs:348
+msgid "~%d s"
+msgstr ""
+
+#: src/progress.rs:350
+msgid "~%d min"
+msgstr ""
+
+#: src/properties.rs:102
+msgid "Basic"
+msgstr ""
+
+#: src/properties.rs:144
+msgid "Location"
+msgstr ""
+
+#: src/properties.rs:153
+msgid "Contents"
+msgstr ""
+
+#: src/properties.rs:169
+msgid "Accessed"
+msgstr ""
+
+#: src/properties.rs:170
+msgid "Created"
+msgstr ""
+
+#: src/properties.rs:184
+msgid "Free Space"
+msgstr ""
+
+#: src/properties.rs:201
+msgid "Counting…"
+msgstr ""
+
+#: src/properties.rs:233
+#, rust-format
+msgid "{items} items"
+msgstr ""
+
+#: src/rename.rs:39
+msgid "Could not rename"
+msgstr ""
+
+#: src/settings_dialog.rs:85
+msgid "View"
+msgstr ""
+
+#: src/settings_dialog.rs:86
+msgid "Sorting"
+msgstr ""
+
+#: src/settings_dialog.rs:87 src/terminal_panel.rs:58
+msgid "Terminal"
+msgstr ""
+
+#: src/settings_dialog.rs:91
+msgid "File operations"
+msgstr ""
+
+#: src/settings_dialog.rs:93 src/trash_actions.rs:122
+msgid "Delete"
+msgstr ""
+
+#: src/settings_dialog.rs:97
+msgid "Context menu"
+msgstr ""
+
+#: src/settings_dialog.rs:102
+msgid "Cloud (WebDAV)"
+msgstr ""
+
+#: src/settings_dialog.rs:142
+msgid "Default View"
+msgstr ""
+
+#: src/settings_dialog.rs:169
+msgid "Default Icon Size"
+msgstr ""
+
+#: src/settings_dialog.rs:196
+msgid "On files and folders"
+msgstr ""
+
+#: src/settings_dialog.rs:211
+msgid "Upload/Sync with Cloud"
+msgstr ""
+
+#: src/settings_dialog.rs:213
+msgid "Add/Remove Bookmark"
+msgstr ""
+
+#: src/settings_dialog.rs:222
+msgid "On empty space"
+msgstr ""
+
+#: src/settings_dialog.rs:237
+msgid ""
+"\"Open\" and \"Properties\" always stay. Entries apply wherever they exist — "
+"file rows and empty space alike."
+msgstr ""
+
+#: src/settings_dialog.rs:260
+msgid "Limited effectiveness on this storage"
+msgstr ""
+
+#: src/settings_dialog.rs:261
+msgid ""
+"This medium (SSD or copy-on-write filesystem) cannot guarantee that "
+"overwritten data is unrecoverable — wear leveling and snapshots may keep "
+"stale copies. The feature stays enabled, but treat it as best-effort, not a "
+"security promise."
+msgstr ""
+
+#: src/settings_dialog.rs:262
+msgid "Understood"
+msgstr ""
+
+#: src/settings_dialog.rs:275
+msgid "Overwrite files when deleting permanently"
+msgstr ""
+
+#: src/settings_dialog.rs:289
+msgid "Overwrite passes"
+msgstr ""
+
+#: src/settings_dialog.rs:293
+msgid ""
+"Only applies to permanent deletion (Shift+Delete). The trash stays untouched."
+msgstr ""
+
+#: src/settings_dialog.rs:312
+msgid "Modification Date"
+msgstr ""
+
+#: src/settings_dialog.rs:325
+msgid "Default Sort Field"
+msgstr ""
+
+#: src/settings_dialog.rs:342
+msgid "Sort Descending"
+msgstr ""
+
+#: src/settings_dialog.rs:365
+msgid "Automatic detection"
+msgstr ""
+
+#: src/settings_dialog.rs:381
+msgid "Terminal Emulator"
+msgstr ""
+
+#: src/settings_dialog.rs:385
+msgid ""
+"Used by \"Open Terminal Here\" — Automatic picks the first installed "
+"emulator."
+msgstr ""
+
+#: src/settings_dialog.rs:404
+msgid "Copy files in parallel"
+msgstr ""
+
+#: src/settings_dialog.rs:414
+msgid "Copy workers"
+msgstr ""
+
+#: src/settings_dialog.rs:424
+msgid ""
+"This machine has %d CPU cores — 2–4 workers are usually optimal on SSDs; on "
+"hard disks or network drives parallel copying can be slower."
+msgstr ""
+
+#: src/settings_dialog.rs:446
+msgid "Server"
+msgstr ""
+
+#: src/settings_dialog.rs:449
+msgid ""
+"Nextcloud/ownCloud: host only is enough — the endpoint /remote.php/dav/files/"
+"<user> is assumed. Other WebDAV providers: enter the full URL including the "
+"path."
+msgstr ""
+
+#: src/settings_dialog.rs:458
+msgid "Username"
+msgstr ""
+
+#: src/settings_dialog.rs:471
+msgid "Enter server and username first"
+msgstr ""
+
+#: src/settings_dialog.rs:473
+msgid "Password stored — encrypted in the system keyring"
+msgstr ""
+
+#: src/settings_dialog.rs:475
+msgid "No password stored yet"
+msgstr ""
+
+#: src/settings_dialog.rs:494
+msgid "App Password"
+msgstr ""
+
+#: src/settings_dialog.rs:500
+msgid "Forget Password"
+msgstr ""
+
+#: src/settings_dialog.rs:515
+msgid ""
+"The password is stored encrypted in the system keyring, never as plain text."
+msgstr ""
+
+#: src/sidebar.rs:188
+msgid "Places"
+msgstr ""
+
+#: src/sidebar.rs:190
+msgid "Home"
+msgstr ""
+
+#: src/sidebar.rs:196
+msgid "Desktop"
+msgstr ""
+
+#: src/sidebar.rs:203
+msgid "Recent"
+msgstr ""
+
+#: src/sidebar.rs:208
+msgid "File System"
+msgstr ""
+
+#: src/sidebar.rs:213
+msgid "Trash"
+msgstr ""
+
+#: src/sidebar.rs:218
+msgid "Bookmarks"
+msgstr ""
+
+#: src/sidebar.rs:221
+msgid "Devices"
+msgstr ""
+
+#: src/sidebar.rs:224
+msgid "Network"
+msgstr ""
+
+#: src/sidebar.rs:227
+msgid "Browse Network"
+msgstr ""
+
+#: src/sidebar.rs:253
+msgid "Cloud"
+msgstr ""
+
+#: src/terminal_panel.rs:65
+msgid "Close Terminal Panel"
+msgstr ""
+
+#: src/trash_actions.rs:48 src/trash_actions.rs:68
+msgid "Could not restore the item"
+msgstr ""
+
+#: src/trash_actions.rs:79
+msgid "This item will be gone for good."
+msgstr ""
+
+#: src/trash_actions.rs:91
+msgid "Empty the trash?"
+msgstr ""
+
+#: src/trash_actions.rs:92
+msgid "All items in the trash will be deleted permanently."
+msgstr ""
+
+#: src/undo.rs:39
+msgid "Undo Copy"
+msgstr ""
+
+#: src/undo.rs:40
+msgid "Undo Move"
+msgstr ""
+
+#: src/undo.rs:41
+msgid "Undo Trash"
+msgstr ""
+
+#: src/window_actions.rs:385
+msgid ""
+"The LieraOS file manager.\n"
+"\n"
+"Attribution notice (GPLv3 §7(b)): The author attribution \"Jörg Schröder\" "
+"must be preserved in source file headers and in this About dialog or "
+"equivalent legal notices."
+msgstr ""
+
+#: src/browser_tab/status_text.rs:16
+msgid "1 item"
+msgid_plural "%d items"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/browser_tab/status_text.rs:21
+msgid "1 item selected"
+msgid_plural "%d items selected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/context_menu/background.rs:38
+msgid "Empty Document"
+msgstr ""
+
+#: src/context_menu/background.rs:58
+msgid "Open Terminal Here"
+msgstr ""
+
+#: src/nextcloud/dialog.rs:25
+msgid "Upload to Cloud"
+msgstr ""
+
+#: src/nextcloud/dialog.rs:43
+msgid "Target folder"
+msgstr ""
+
+#: src/nextcloud/dialog.rs:61
+msgid "Loading…"
+msgstr ""
+
+#: src/nextcloud/dialog.rs:69
+msgid "New subfolder (optional)"
+msgstr ""
+
+#: src/nextcloud/dialog.rs:76
+msgid "Upload"
+msgstr ""
+
+#: src/nextcloud/dialog.rs:143
+msgid "Could not list folders"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:24
+msgid "Synced Folders"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:50
+msgid "No synced folders yet"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:60
+msgid "Add Synced Folder…"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:93
+msgid "Sync Now"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:103
+msgid "Remove"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:119 src/nextcloud/folders_ui.rs:201
+msgid "Upload only"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:120
+msgid "Two-way"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:123 src/nextcloud/folders_ui.rs:206
+msgid "Manual"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:124 src/nextcloud/folders_ui.rs:207
+msgid "On change"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:125
+msgid "Every"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:155
+msgid "Sync Folder with Cloud"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:174
+msgid "Browse…"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:180
+msgid "Choose local folder"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:193
+msgid "Local folder"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:197
+msgid "e.g. Documents/Work — empty = cloud root"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:199
+msgid "Cloud folder"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:201
+msgid "Two-way (mirror both sides)"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:202
+msgid "Direction"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:208
+msgid "Every 5 minutes"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:209
+msgid "Every 15 minutes"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:210
+msgid "Every hour"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:214
+msgid "Synchronize"
+msgstr ""
+
+#: src/nextcloud/folders_ui.rs:225
+msgid "Save"
+msgstr ""
+
+#: src/nextcloud/sync.rs:88
+msgid "Synchronizing…"
+msgstr ""
+
+#: src/progress/jobs.rs:42
+msgid "Moving…"
+msgstr ""
+
+#: src/progress/jobs.rs:44
+msgid "Copying…"
+msgstr ""
+
+#: src/progress/jobs.rs:63
+msgid "Preparing"
+msgstr ""
+
+#: src/progress/jobs.rs:275
+msgid "Deleting…"
+msgstr ""
+
+#: src/sidebar/devices.rs:109 src/sidebar/devices.rs:208
+msgid "Eject"
+msgstr ""
+
+#: src/sidebar/devices.rs:109 src/sidebar/devices.rs:199
+msgid "Unmount"
+msgstr ""
+
+#: src/sidebar/devices.rs:219
+msgid "Mount"
+msgstr ""

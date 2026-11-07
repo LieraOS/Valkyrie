@@ -1,0 +1,8 @@
+# Rust build artifacts
+target/
+*.deb
+*.buildinfo
+*.changes
+
+# gettext build output (compiled .mo are produced by packaging/build-deb.sh)
+*.mo

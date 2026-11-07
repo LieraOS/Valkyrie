@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<defs>
+ <linearGradient id="folder" x1="0" y1="0" x2="0.1" y2="1">
+  <stop offset="0" stop-color="#9c70a4"/><stop offset="0.42" stop-color="#704875"/><stop offset="1" stop-color="#382c49"/>
+ </linearGradient>
+ <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#8b5f91"/><stop offset="1" stop-color="#4a3458"/>
+ </linearGradient>
+ <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#f4f1ff"/><stop offset="1" stop-color="#b8c2e5"/>
+ </linearGradient>
+ <linearGradient id="drive" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#a7abc6"/><stop offset="1" stop-color="#555a78"/>
+ </linearGradient>
+ <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+  <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#171321" flood-opacity=".25"/>
+ </filter>
+</defs>
+<path d="M38 27h35l17 17v56H38Z" fill="url(#paper)" stroke="#aeb4d8" stroke-width="2"/><path d="M73 27v18h17" stroke="#aeb4d8" stroke-width="2" fill="none"/><circle cx="53" cy="57" r="5" fill="#70c8ed"/><path d="m43 86 17-19 10 9 8-12 8 22Z" fill="#7778bd"/><path d="m43 86 17-19 10 9" stroke="#b9e8f5" stroke-width="2" fill="none"/>
+</svg>

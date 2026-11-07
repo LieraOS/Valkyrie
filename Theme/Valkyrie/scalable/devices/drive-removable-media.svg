@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+<defs>
+ <linearGradient id="folder" x1="0" y1="0" x2="0.1" y2="1">
+  <stop offset="0" stop-color="#9c70a4"/><stop offset="0.42" stop-color="#704875"/><stop offset="1" stop-color="#382c49"/>
+ </linearGradient>
+ <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#8b5f91"/><stop offset="1" stop-color="#4a3458"/>
+ </linearGradient>
+ <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#f4f1ff"/><stop offset="1" stop-color="#b8c2e5"/>
+ </linearGradient>
+ <linearGradient id="drive" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#a7abc6"/><stop offset="1" stop-color="#555a78"/>
+ </linearGradient>
+ <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+  <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#171321" flood-opacity=".25"/>
+ </filter>
+</defs>
+<g filter="url(#shadow)"><path d="M39 31h50l10 54q2 10-9 10H38q-11 0-9-10Z" fill="url(#drive)" stroke="#c3c7e1" stroke-width="2"/><path d="M64 42v30m0-30-9 9m9-9 9 9m-9 21-8-8m8 8 8-8" stroke="#e9e6ff" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="88" cy="86" r="4" fill="#8de1bd"/></g>
+</svg>

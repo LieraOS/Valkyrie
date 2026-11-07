@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Valkyrie
+Name[de]=Valkyrie
+Comment=Browse the file system
+Comment[de]=Das Dateisystem durchsuchen
+Exec=valkyrie %U
+Icon=valkyrie
+Terminal=false
+Categories=System;FileTools;FileManager;GTK;
+MimeType=inode/directory;
+StartupNotify=true
