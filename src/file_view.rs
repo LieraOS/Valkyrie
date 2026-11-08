@@ -117,6 +117,12 @@ impl FileView {
         });
         // Files dropped anywhere on the view land in the displayed dir.
         crate::dnd::attach_view_drop(&this);
+        // Re-tint clip marks when the clipboard flips anywhere —
+        // a paste in another window clears them here too.
+        let fv = this.clone();
+        crate::operations::connect_clip_notify(std::rc::Rc::new(move || {
+            fv.refresh_clip_styles();
+        }));
         this
     }
 

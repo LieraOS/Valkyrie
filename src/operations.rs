@@ -8,6 +8,7 @@
 // window in progress.rs so they stay cancellable.
 
 use std::cell::RefCell;
+use std::rc::Rc;
 
 use gtk4::prelude::*;
 
@@ -19,6 +20,7 @@ use crate::i18n::{tr, trn};
 // across applications — e.g. copy on the desktop, paste in Valkyrie.
 thread_local! {
     static CLIPBOARD: RefCell<Vec<gio::File>> = const { RefCell::new(Vec::new()) };
+    static CLIP_NOTIFY: RefCell<Vec<Rc<dyn Fn()>>> = const { RefCell::new(Vec::new()) };
     static CLIPBOARD_CUT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 
@@ -43,6 +45,21 @@ pub fn set_clipboard(files: &[gio::File], cut: bool) {
     CLIPBOARD.with(|c| *c.borrow_mut() = files.to_vec());
     CLIPBOARD_CUT.with(|c| c.set(cut));
     publish_clipboard(files, cut);
+    notify_clip();
+}
+
+/// Views subscribe here to re-tint marks whenever the clipboard
+/// state flips (copy stage AND paste consumption), across windows.
+pub fn connect_clip_notify(cb: Rc<dyn Fn()>) {
+    CLIP_NOTIFY.with(|c| c.borrow_mut().push(cb));
+}
+
+fn notify_clip() {
+    CLIP_NOTIFY.with(|c| {
+        for f in c.borrow().iter() {
+            f();
+        }
+    });
 }
 
 /// Clipboard state for `file`: Some(true) = staged for cut,
@@ -129,6 +146,7 @@ pub fn paste(dest: &gio::File, parent: &gtk4::Widget) {
             // its data; a second paste just works, but items must
             // not stay dimmed).
             CLIPBOARD.with(|c| c.borrow_mut().clear());
+            notify_clip();
         }
     });
 }
