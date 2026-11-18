@@ -1,4 +1,4 @@
-# Valkyrie
+# <img src="icon/icon.png" alt="" height="44"> Valkyrie
 
 Der LieraOS-Dateimanager — ein GTK4-Dateibrowser in Rust.
 
