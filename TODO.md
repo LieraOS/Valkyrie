@@ -7,6 +7,28 @@
 - [ ] Real Nextcloud/ownCloud verification with TLS (davs://) —
       local WsgiDAV proved plain-dav sync both ways, TLS + Nextcloud
       ETag/chunk semantics still pending on the real server
+- [ ] Terminal panel cd-injection: the panel follows navigation by
+      feeding `cd` into the running shell's input. If the user has a
+      half-typed command at the prompt, the injected `cd ` lands in
+      the middle of their line (or executes their partial input).
+      Needs prompt-state awareness — e.g. only inject when the
+      previous keystroke buffer is empty, or use VTE's
+      feed_child only after confirming a clean prompt
+- [ ] Directory view does not pick up externally created files —
+      observed live: a screenshot tool wrote a new .png into the
+      displayed folder and the view stayed stale until manual F5.
+      dir_watch only covers delete+recreate of the folder itself;
+      ordinary file-added should arrive through GtkDirectoryList's
+      own monitor. Reproduce and diagnose: monitor never armed,
+      events dropped, or model not updated
+- [ ] Context menu survives window focus change: open a right-click
+      popover in window A, then activate/drag window B — the menu in
+      A should dismiss on focus loss but stays open, even floating
+      above B. Cause: autohide is disabled for the hand-built
+      popovers and the manual dismissal only watches presses inside
+      the owning window. Fix direction: popdown on the window's
+      is-active/focus loss, or re-check GTK autohide behaviour
+      across windows of the same app
 
 ## Done
 

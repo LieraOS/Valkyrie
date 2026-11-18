@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Valkyrie — the LieraOS file manager
+// Copyright (C) 2026 Jörg Schröder, LieraOS Project
+//
 // Tests for the terminal panel's pure helpers.
 
 use super::shell_quote;

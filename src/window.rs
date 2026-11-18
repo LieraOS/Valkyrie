@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Valkyrie — the LieraOS file manager
-// Copyright (C) 2026 LieraOS Project
+// Copyright (C) 2026 Jörg Schröder, LieraOS Project
 //
 // Main window: classic menu bar on top, a GtkNotebook of browser tabs
 // and the places sidebar. All menu entries are "win.*" actions whose

@@ -9,10 +9,10 @@ msgstr ""
 "Project-Id-Version: valkyrie 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-10-26 04:10+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"PO-Revision-Date: 2026-11-18 03:20+0100\n"
+"Last-Translator: LieraOS Project <projekt@lieraos.local>\n"
 "Language-Team: de <LL@li.org>\n"
-"Language: \n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -404,8 +404,8 @@ msgstr "Konnte nicht in den Papierkorb verschieben"
 #: src/operations.rs:142 src/operations.rs:145
 msgid "This item will be deleted permanently. This cannot be undone."
 msgid_plural "These items will be deleted permanently. This cannot be undone."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Dieses Element wird endgültig gelöscht. Das kann nicht rückgängig gemacht werden."
+msgstr[1] "Diese Elemente werden endgültig gelöscht. Das kann nicht rückgängig gemacht werden."
 
 #: src/operations.rs:150 src/trash_actions.rs:78
 msgid "Delete permanently?"
@@ -430,14 +430,14 @@ msgstr "Jede kopierte Datei hashen und mit der Quelle vergleichen (BLAKE3)"
 #: src/progress.rs:240
 msgid "Integrity check failed for %d file"
 msgid_plural "Integrity check failed for %d files"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Integritätsprüfung für %d Datei fehlgeschlagen"
+msgstr[1] "Integritätsprüfung für %d Dateien fehlgeschlagen"
 
 #: src/progress.rs:250
 msgid "Integrity verified for %d file"
 msgid_plural "Integrity verified for %d files"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Integrität für %d Datei geprüft"
+msgstr[1] "Integrität für %d Dateien geprüft"
 
 #: src/progress.rs:273
 msgid "verifying…"
@@ -549,6 +549,8 @@ msgid ""
 "\"Open\" and \"Properties\" always stay. Entries apply wherever they exist — "
 "file rows and empty space alike."
 msgstr ""
+"\"Öffnen\" und \"Eigenschaften\" bleiben immer. Einträge gelten überall dort, "
+"wo sie existieren — für Dateizeilen und freie Fläche gleichermaßen."
 
 #: src/settings_dialog.rs:260
 msgid "Limited effectiveness on this storage"
@@ -561,6 +563,10 @@ msgid ""
 "stale copies. The feature stays enabled, but treat it as best-effort, not a "
 "security promise."
 msgstr ""
+"Dieses Medium (SSD oder Copy-on-Write-Dateisystem) kann nicht garantieren, "
+"dass überschriebene Daten unwiederherstellbar sind — Wear-Leveling und "
+"Snapshots können alte Kopien behalten. Die Funktion bleibt aktiviert, ist "
+"aber als Best-Effort zu verstehen, nicht als Sicherheitsversprechen."
 
 #: src/settings_dialog.rs:262
 msgid "Understood"
@@ -577,7 +583,7 @@ msgstr "Überschreib-Durchgänge"
 #: src/settings_dialog.rs:293
 msgid ""
 "Only applies to permanent deletion (Shift+Delete). The trash stays untouched."
-msgstr ""
+msgstr "Gilt nur für das endgültige Löschen (Umschalt+Entf). Der Papierkorb bleibt unberührt."
 
 #: src/settings_dialog.rs:312
 msgid "Modification Date"
@@ -604,6 +610,8 @@ msgid ""
 "Used by \"Open Terminal Here\" — Automatic picks the first installed "
 "emulator."
 msgstr ""
+"Wird von \"Hier ein Terminal öffnen\" verwendet — Automatisch wählt den "
+"ersten installierten Emulator."
 
 #: src/settings_dialog.rs:404
 msgid "Copy files in parallel"
@@ -618,6 +626,8 @@ msgid ""
 "This machine has %d CPU cores — 2–4 workers are usually optimal on SSDs; on "
 "hard disks or network drives parallel copying can be slower."
 msgstr ""
+"Dieser Rechner hat %d CPU-Kerne — 2–4 Worker sind auf SSDs meist optimal; "
+"auf Festplatten oder Netzlaufwerken kann paralleles Kopieren langsamer sein."
 
 #: src/settings_dialog.rs:446
 msgid "Server"
@@ -657,7 +667,7 @@ msgstr "Passwort vergessen"
 #: src/settings_dialog.rs:515
 msgid ""
 "The password is stored encrypted in the system keyring, never as plain text."
-msgstr ""
+msgstr "Das Passwort wird verschlüsselt im System-Schlüsselring gespeichert, niemals als Klartext."
 
 #: src/sidebar.rs:188
 msgid "Places"
@@ -743,18 +753,23 @@ msgid ""
 "must be preserved in source file headers and in this About dialog or "
 "equivalent legal notices."
 msgstr ""
+"Der LieraOS-Dateimanager.\n"
+"\n"
+"Namensnennungshinweis (GPLv3 §7(b)): Die Autoren-Nennung \"Jörg Schröder\" "
+"muss in den Quelldatei-Köpfen und in diesem Über-Dialog bzw. gleichwertigen "
+"rechtlichen Hinweisen erhalten bleiben."
 
 #: src/browser_tab/status_text.rs:16
 msgid "1 item"
 msgid_plural "%d items"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "1 Element"
+msgstr[1] "%d Elemente"
 
 #: src/browser_tab/status_text.rs:21
 msgid "1 item selected"
 msgid_plural "%d items selected"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "1 Element ausgewählt"
+msgstr[1] "%d Elemente ausgewählt"
 
 #: src/context_menu/background.rs:38
 msgid "Empty Document"
