@@ -159,17 +159,23 @@ pub fn copy_tree(
             .map_err(|e| glib::Error::new(gio::IOErrorEnum::Failed, &e.to_string()))?;
             if want {
                 if let Some(v) = opts.verify.as_mut() {
-                    let result = match outcome {
-                        CopyOutcome::Reflinked => VerifyResult::Reflinked,
+                    match outcome {
+                        CopyOutcome::Reflinked => (v.report)(&name, VerifyResult::Reflinked),
                         CopyOutcome::Copied(src_hash) => {
-                            match (src_hash, fast_copy::hash_file(&dp, cancel)) {
-                                (Some(a), Ok(b)) if a == b => VerifyResult::Verified,
-                                (Some(_), Ok(_)) => VerifyResult::Mismatch,
-                                _ => VerifyResult::Unverifiable,
+                            // Lane present: the re-hash runs in the
+                            // background while the next file copies.
+                            if let Some(lane) = v.lane {
+                                lane.submit(name, dp.clone(), src_hash);
+                            } else {
+                                let result = match (src_hash, fast_copy::hash_file(&dp, cancel)) {
+                                    (Some(a), Ok(b)) if a == b => VerifyResult::Verified,
+                                    (Some(_), Ok(_)) => VerifyResult::Mismatch,
+                                    _ => VerifyResult::Unverifiable,
+                                };
+                                (v.report)(&name, result);
                             }
                         }
-                    };
-                    (v.report)(&name, result);
+                    }
                 }
             }
         }

@@ -65,6 +65,7 @@ pub fn build_grid_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4::Gr
             .wrap_mode(gtk4::pango::WrapMode::WordChar)
             .justify(gtk4::Justification::Center)
             .build();
+        caption.set_widget_name(view_widgets::CAPTION_MARKER);
         // GtkGridView gives every cell the height of the tallest item,
         // so a single long filename (wrapped to two lines) inflated
         // every row in that directory and looked like random extra
@@ -118,6 +119,9 @@ pub fn build_grid_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4::Gr
         // rubber-band hit test (src/rubberband.rs) — GtkListItemWidget
         // exposes no public position getter.
         unsafe { box_.set_data("valkyrie-pos", item.position()) };
+        // A recycled row under a static pointer would show a stale
+        // expanded caption — drop it; motion re-shows if needed.
+        crate::view_widgets::hide_caption_for(box_.upcast_ref());
         let (Some(image), Some(caption)) = (
             box_.first_child().and_downcast::<gtk4::Image>(),
             box_.first_child()

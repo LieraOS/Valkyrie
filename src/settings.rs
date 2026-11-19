@@ -35,11 +35,11 @@ fn settings() -> Option<gio::Settings> {
     ))
 }
 
-/// Persisted file-view mode: "list" or "icons".
+/// Persisted file-view mode: "icons", "list" or "compact".
 pub fn view_mode() -> String {
     settings()
         .map(|s| s.string(KEY_VIEW_MODE).to_string())
-        .filter(|v| v == "list" || v == "icons")
+        .filter(|v| v == "list" || v == "icons" || v == "compact")
         .unwrap_or_else(|| "icons".to_string())
 }
 

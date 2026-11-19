@@ -72,6 +72,13 @@ pub struct ViewModel {
     pub list: gtk4::SortListModel,
     filter: gtk4::CustomFilter,
     show_hidden: Rc<Cell<bool>>,
+    /// The map stage over the DirectoryList — kept so a content
+    /// refresh can swap in a fresh enumeration without touching
+    /// filter, sorter, selections or widgets. None for search
+    /// results (for_entries): they do not track a directory.
+    dir_map: Option<gtk4::MapListModel>,
+    /// Displayed location — needed to rebuild the DirectoryList.
+    location: Option<gio::File>,
 }
 
 impl ViewModel {
@@ -98,7 +105,10 @@ impl ViewModel {
                 .unwrap_or_default();
             FileObject::new(&parent.child(&name), Some(info)).upcast::<glib::Object>()
         });
-        Self::from_base(mapped.upcast())
+        let mut this = Self::from_base(mapped.clone().upcast());
+        this.dir_map = Some(mapped);
+        this.location = Some(location.clone());
+        this
     }
 
     /// Pipeline over an already-filled store of FileObjects — used by
@@ -134,7 +144,26 @@ impl ViewModel {
             list,
             filter,
             show_hidden,
+            dir_map: None,
+            location: None,
         }
+    }
+
+    /// Re-enumerate the directory contents in place: a fresh
+    /// DirectoryList is swapped under the existing MapListModel, so
+    /// filter, sorter, selection models and widgets all stay put —
+    /// only the items change. Called by the FileView's own directory
+    /// monitor: GtkDirectoryList's internal monitoring misses files
+    /// that were *renamed into* the directory (browser downloads,
+    /// `mv`, atomic saves), which is why we monitor ourselves.
+    /// No-op for search-result models.
+    pub fn refresh_contents(&self) {
+        let (Some(map), Some(location)) = (&self.dir_map, &self.location) else {
+            return;
+        };
+        let dir_list = gtk4::DirectoryList::new(Some(ATTRIBUTES), Some(location));
+        dir_list.set_monitored(true);
+        map.set_model(Some(&dir_list));
     }
 
     /// Plug the ColumnView's sorter under a directories-first sorter.
@@ -281,4 +310,142 @@ fn natural_cmp(a: &str, b: &str) -> Ordering {
             }
         }
     }
+}
+// Quick reproduction: does a monitored GtkDirectoryList notice an: does a monitored GtkDirectoryList notice an
+// externally created file without being recreated?
+#[test]
+fn dirlist_monitor_picks_up_new_file() {
+    if gtk4::init().is_err() {
+        eprintln!("no display — skipping");
+        return;
+    }
+    let dir = std::env::temp_dir().join(format!("vky-dlmon-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let location = gio::File::for_path(&dir);
+
+    let target = dir.join("new-file.txt");
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(400));
+        std::fs::write(&target, b"hello").unwrap();
+    });
+
+    // Own thread-default context: tests run in parallel threads and
+    // the shared default context would steal each other's wakeups.
+    // The DirectoryList is built inside so its internal file monitor
+    // attaches to this context.
+    let ctx = glib::MainContext::new();
+    let count = ctx
+        .with_thread_default(|| {
+            let dl = gtk4::DirectoryList::new(Some("standard::name"), Some(&location));
+            dl.set_monitored(true);
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(4);
+            let mut count = 0u32;
+            while std::time::Instant::now() < deadline {
+                ctx.iteration(false);
+                count = dl.n_items();
+                if count > 0 {
+                    break;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(20));
+            }
+            count
+        })
+        .unwrap_or(0);
+    std::fs::remove_dir_all(&dir).ok();
+    assert_eq!(count, 1, "monitored DirectoryList must see the new file");
+}
+
+/// The FileView refresh path: after our own directory monitor fires,
+/// refresh_contents swaps a fresh DirectoryList under the existing
+/// MapListModel — renamed-in files (browser downloads) must surface
+/// in the final sorted pipeline. Guards the fix for the stale-view
+/// bug where GtkDirectoryList's internal monitor drops moved-in
+/// events.
+#[test]
+fn refresh_contents_picks_up_renamed_file() {
+    if gtk4::init().is_err() {
+        eprintln!("no display — skipping");
+        return;
+    }
+    let dir = std::env::temp_dir().join(format!("vky-vm-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let location = gio::File::for_path(&dir);
+    let vm = ViewModel::new(&location);
+
+    let ctx = glib::MainContext::new();
+    let names = ctx
+        .with_thread_default(|| {
+            std::fs::write(dir.join("file.part"), b"payload").unwrap();
+            std::fs::rename(dir.join("file.part"), dir.join("file.bin")).unwrap();
+            vm.refresh_contents();
+
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+            let mut names = Vec::new();
+            while std::time::Instant::now() < deadline {
+                ctx.iteration(false);
+                names.clear();
+                for i in 0..vm.list.n_items() {
+                    let obj = vm.list.item(i).unwrap();
+                    let fo = obj.downcast_ref::<FileObject>().unwrap();
+                    names.push(fo.display_name());
+                }
+                if names.iter().any(|n| n == "file.bin") {
+                    break;
+                }
+                std::thread::sleep(std::time::Duration::from_millis(20));
+            }
+            names
+        })
+        .unwrap_or_default();
+    std::fs::remove_dir_all(&dir).ok();
+    assert!(
+        names.iter().any(|n| n == "file.bin"),
+        "refresh_contents must surface renamed file; got {names:?}"
+    );
+}
+
+/// Raw GFileMonitor sanity check: renamed-into-dir must produce a
+/// usable event (this is what browsers/downloads actually do).
+#[test]
+fn raw_monitor_sees_rename_in() {
+    let dir = std::env::temp_dir().join(format!("vky-rawmon-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let location = gio::File::for_path(&dir);
+    let events = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+
+    let part = dir.join("g.part");
+    let fin = dir.join("g.bin");
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(300));
+        std::fs::write(&part, b"x").unwrap();
+        std::fs::rename(&part, &fin).unwrap();
+    });
+
+    let ctx = glib::MainContext::new();
+    let mon = std::rc::Rc::new(std::cell::RefCell::new(None::<gio::FileMonitor>));
+    let _ = ctx.with_thread_default(|| {
+        let m = location
+            .monitor_directory(gio::FileMonitorFlags::NONE, gio::Cancellable::NONE)
+            .unwrap();
+        let ev = events.clone();
+        m.connect_changed(move |_, f, _, e| {
+            ev.borrow_mut()
+                .push((f.basename().unwrap().to_string_lossy().into_owned(), e));
+        });
+        *mon.borrow_mut() = Some(m);
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+        while std::time::Instant::now() < deadline {
+            ctx.iteration(false);
+            if events.borrow().iter().any(|(n, _)| n == "g.bin") {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+    });
+    let evs = events.borrow().clone();
+    std::fs::remove_dir_all(&dir).ok();
+    assert!(
+        evs.iter().any(|(n, _)| n == "g.bin"),
+        "raw monitor must report the renamed file; events: {evs:?}"
+    );
 }

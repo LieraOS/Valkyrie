@@ -32,7 +32,9 @@ pub struct BrowserTab {
     pub(crate) file_view: FileView,
     pub(crate) pathbar: Pathbar,
     pub(crate) location_entry: gtk4::Entry,
-    pub(crate) view_toggle: gtk4::ToggleButton,
+    /// View switcher: icons, list, compact — the pressed button
+    /// shows the active mode at a glance.
+    pub(crate) view_switcher: [gtk4::ToggleButton; 3],
     pub(crate) status: gtk4::Label,
     /// Zoom slider in the status row; `zoom_loading` suppresses the
     /// write-back while a per-directory value is being applied.
@@ -96,11 +98,28 @@ impl BrowserTab {
         path_stack.set_hexpand(true);
         toolbar.append(&path_stack);
 
-        let view_toggle = gtk4::ToggleButton::builder()
+        // Three linked toggle buttons — the pressed one marks the
+        // active renderer without opening a menu.
+        let view_switcher = gtk4::Box::new(gtk4::Orientation::Horizontal, 0);
+        view_switcher.add_css_class("linked");
+        let b_icons = gtk4::ToggleButton::builder()
             .icon_name("view-grid-symbolic")
-            .tooltip_text(tr("Toggle icon view"))
+            .tooltip_text(tr("Icon View"))
             .build();
-        toolbar.append(&view_toggle);
+        let b_list = gtk4::ToggleButton::builder()
+            .icon_name("view-list-symbolic")
+            .tooltip_text(tr("List View"))
+            .group(&b_icons)
+            .build();
+        let b_compact = gtk4::ToggleButton::builder()
+            .icon_name("view-compact-symbolic")
+            .tooltip_text(tr("Compact View"))
+            .group(&b_icons)
+            .build();
+        view_switcher.append(&b_icons);
+        view_switcher.append(&b_list);
+        view_switcher.append(&b_compact);
+        toolbar.append(&view_switcher);
 
         // Search toggle mirrors the search bar's visibility both ways.
         let search_ui = crate::search::SearchUi::new();
@@ -166,7 +185,7 @@ impl BrowserTab {
             file_view,
             pathbar,
             location_entry,
-            view_toggle: view_toggle.clone(),
+            view_switcher: [b_icons.clone(), b_list.clone(), b_compact.clone()],
             status,
             zoom_scale: zoom_scale.clone(),
             zoom_loading: Rc::new(Cell::new(false)),
@@ -183,7 +202,7 @@ impl BrowserTab {
         };
 
         crate::navigation::wire(&tab, &back, &forward, &up, &path_stack);
-        crate::navigation::wire_view_toggle(&tab, &view_toggle);
+        crate::navigation::wire_view_switcher(&tab, [&b_icons, &b_list, &b_compact]);
         crate::zoom::wire(&tab, &zoom_scale);
         crate::search::wire(&tab, &search_ui);
 
@@ -272,18 +291,24 @@ impl BrowserTab {
 
     // --- Accessors used by the menubar actions -----------------------
 
-    /// Switch view mode through the toggle button so both stay in sync.
-    pub fn set_icon_mode(&self, icons: bool) {
-        if self.view_toggle.is_active() != icons {
-            self.view_toggle.set_active(icons);
+    /// Switch view mode through the switcher so the pressed button
+    /// and the shown renderer always agree.
+    pub fn set_view_mode(&self, mode: crate::file_view::ViewMode) {
+        let idx = match mode {
+            crate::file_view::ViewMode::Icons => 0,
+            crate::file_view::ViewMode::List => 1,
+            crate::file_view::ViewMode::Compact => 2,
+        };
+        if !self.view_switcher[idx].is_active() {
+            self.view_switcher[idx].set_active(true);
         } else {
-            self.for_each_view(|v| v.set_icon_mode(icons));
+            self.for_each_view(|v| v.set_view_mode(mode));
         }
     }
 
-    /// Whether the icon grid is visible.
-    pub fn is_icon_mode(&self) -> bool {
-        self.file_view.is_icon_mode()
+    /// Which renderer is currently shown.
+    pub fn view_mode(&self) -> crate::file_view::ViewMode {
+        self.file_view.view_mode()
     }
 
     pub fn show_hidden(&self) -> bool {

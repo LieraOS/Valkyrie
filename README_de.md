@@ -9,11 +9,10 @@ Terminal, eine parallelisierte Copy-Engine mit Integritätsprüfung und
 Zwei-Wege-WebDAV-Ordnersync — alles ohne Webview oder Framework
 darunter, nur GTK4, GIO und Rust.
 
-> **Status:** stabil und im täglichen Einsatz. Zwei Bereiche warten
+> **Status:** stabil und im täglichen Einsatz. Ein Bereich wartet
 > noch auf Verifikation im Realbetrieb — siehe `TODO_de.md`: WebDAV-
 > Sync gegen einen echten Nextcloud/ownCloud-Server (bisher nur gegen
-> einen lokalen Testserver verifiziert) und ein Edge-Case bei der
-> Eingabe im Terminal-Panel.
+> einen lokalen Testserver verifiziert).
 
 ## Screenshots
 
@@ -29,8 +28,13 @@ darunter, nur GTK4, GIO und Rust.
   zwischen Fenstern ablösbar — ein Tab, der aus jedem Fenster
   herausgezogen wird, öffnet ein neues; die Tableiste blendet sich
   bei nur einem Tab automatisch aus
-- Icon-Raster und Detail-Liste (Name/Größe/Typ/Geändert, klickbare
-  Spaltenköpfe); natürliche Dateinamen-Sortierung (file_2 < file_10)
+- Drei Ansichtsmodi — Icon-Raster, Detail-Liste und Kompaktliste —
+  umschaltbar über die verknüpften Toolbar-Buttons, das Ansicht-Menü
+  oder Strg+1/2/3; die Detail-Liste hat in der Breite verstellbare
+  Spalten (Name/Größe/Typ/Geändert); ein abgeschnittener Dateiname
+  klappt beim Überfahren mit der Maus nach unten auf, ohne das
+  Layout zu verschieben; natürliche Dateinamen-Sortierung
+  (file_2 < file_10)
 - Geteilte Ansicht (F3): zwei unabhängige Panes pro Tab, jeweils mit
   eigener Historie und Breadcrumb; „In andere Ansicht kopieren/
   verschieben" in den Zeilenmenüs
@@ -42,9 +46,12 @@ darunter, nur GTK4, GIO und Rust.
   Start-Dateisystem, folgt nie verlinkten Verzeichnissen
 - Zoom-Regler in der Statusleiste; Icon-Größe wird pro Verzeichnis
   in GVFS-Metadaten gespeichert
-- Verzeichnis-Überwachung überlebt Löschen-und-Neuanlegen (Parent-
-  Verzeichnis-Watch — der inode-gebundene Monitor bliebe sonst
-  stumm)
+- Live-Verzeichnisansicht: neue Dateien erscheinen sofort (eigener
+  debounced GFileMonitor — GtkDirectoryLists interner Monitor
+  verwirft ins-Verzeichnis-verschobene Events wie Browser-Download-
+  Renames), während Schreib-Churn durch wachsende Downloads erst nach
+  einer Ruhepause oder beim Schließen aktualisiert; Löschen-und-
+  Neuanlegen überlebt eine Parent-Verzeichnis-Watch
 
 ### Dateioperationen
 
@@ -55,8 +62,10 @@ darunter, nur GTK4, GIO und Rust.
   btrfs/xfs), fallen auf eine gestreamte Pipeline zurück; Metadaten
   werden auf beiden Pfaden per copy_attributes neu angewandt
 - Optionale Integritätsprüfung: BLAKE3-Hash der Quelle inline beim
-  Kopieren, Ziel wird nachgehasht — Abweichungen werden in einem
-  Bericht gesammelt
+  Kopieren; Ziele werden auf einer Hintergrund-Verify-Lane parallel
+  zum Kopiervorgang erneut gehasht — der Balken bleibt in Bewegung,
+  „fertig" wartet trotzdem auf den letzten Hash; Abweichungen werden
+  in einem Bericht gesammelt
 - Optionaler paralleler Copy-Pool: N Worker ziehen Datei-Payloads aus
   einer gemeinsamen FIFO, während der Tree-Walk sequenziell bleibt
   (auf CPU-Kerne gedeckelt, HDD-Hinweis inklusive)
@@ -87,7 +96,9 @@ darunter, nur GTK4, GIO und Rust.
   Abfrage; erhöhte Fenster bekommen einen roten Rahmen
 - „Im Terminal öffnen" (erkanntes Emulator-Programm) und ein
   eingebettetes VTE-Terminal-Panel (F4), das dem Ordner des aktiven
-  Tabs folgt
+  Tabs folgt — das injizierte `cd` wartet auf einen sauberen Prompt
+  und landet nie mitten in halb getippter Eingabe oder einem
+  laufenden Vordergrund-Programm
 - System-Zwischenablage in beide Richtungen
   (x-special/gnome-copied-files + text/uri-list); ausgeschnittene
   Einträge werden geghostet, bereitgestellte Kopien zeigen eine

@@ -138,14 +138,26 @@ pub fn wire(
     });
 }
 
-/// Icon/list toolbar toggle — writes back to the view and GSettings.
-pub fn wire_view_toggle(tab: &BrowserTab, toggle: &gtk4::ToggleButton) {
-    let view = tab.file_view.clone();
-    toggle.set_active(crate::settings::view_mode() == "icons");
-    toggle.connect_toggled(move |b| {
-        view.set_icon_mode(b.is_active());
-        crate::settings::set_view_mode(if b.is_active() { "icons" } else { "list" });
-    });
+/// Three-way view switcher (icons/list/compact) — writes back to
+/// the view and GSettings. `buttons` matches ViewMode's order.
+pub fn wire_view_switcher(tab: &BrowserTab, buttons: [&gtk4::ToggleButton; 3]) {
+    use crate::file_view::ViewMode::*;
+    const MODES: [crate::file_view::ViewMode; 3] = [Icons, List, Compact];
+    // Seed the persisted mode — exactly one button is pressed.
+    let mode = crate::file_view::ViewMode::from_str(&crate::settings::view_mode());
+    let idx = MODES.iter().position(|m| *m == mode).unwrap_or(0);
+    buttons[idx].set_active(true);
+    for (i, b) in buttons.iter().enumerate() {
+        let view = tab.file_view.clone();
+        b.connect_toggled(move |b| {
+            // Group buttons fire toggled on release too — act only
+            // on the press.
+            if b.is_active() {
+                view.set_view_mode(MODES[i]);
+                crate::settings::set_view_mode(MODES[i].as_str());
+            }
+        });
+    }
 }
 
 /// Drop GTK's leaked implicit pointer-focus grab after a side-button

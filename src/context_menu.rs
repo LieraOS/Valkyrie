@@ -123,6 +123,23 @@ fn wire_dismiss_once(view: &FileView, widget: &gtk4::Widget) {
     });
     if let Some(root) = widget.root() {
         root.add_controller(dismiss);
+
+        // autohide-off popovers also survive focus loss: the menu of
+        // window A would float above window B. Pop it down when the
+        // owning window deactivates.
+        if let Ok(win) = root.dynamic_cast::<gtk4::Window>() {
+            let ctx = view.ctx_popover.clone();
+            win.connect_notify_local(Some("is-active"), move |w, _| {
+                if w.is_active() {
+                    return;
+                }
+                if let Some(p) = ctx.borrow().as_ref() {
+                    if p.is_visible() {
+                        p.popdown();
+                    }
+                }
+            });
+        }
     }
 }
 

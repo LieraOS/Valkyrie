@@ -1,81 +1,151 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# Copyright (C) YEAR LieraOS Project
+# This file is distributed under the same license as the valkyrie package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: valkyrie 0.1.0\n"
+"Project-Id-Version: valkyrie 0.9.8\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-26 04:10+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: de <LL@li.org>\n"
-"Language: \n"
+"POT-Creation-Date: 2026-11-19 07:33+0100\n"
+"PO-Revision-Date: 2026-11-19 00:00+0000\n"
+"Last-Translator: LieraOS Project <projekt@lieraos.local>\n"
+"Language-Team: en <LL@li.org>\n"
+"Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/archive_ui.rs:37
+#: src/archive_ui.rs:60
 msgid "Extraction failed"
 msgstr "Extraction failed"
 
-#: src/archive_ui.rs:39 src/archive_ui.rs:169 src/window_actions.rs:173
+#: src/archive_ui.rs:62 src/archive_ui.rs:205 src/window_actions.rs:173
 msgid "OK"
 msgstr "OK"
 
-#: src/archive_ui.rs:66
+#: src/archive_ui.rs:89
 msgid "Create Archive"
 msgstr "Create Archive"
 
-#: src/archive_ui.rs:83
+#: src/archive_ui.rs:106
 msgid "Archive name:"
 msgstr "Archive name:"
 
-#: src/archive_ui.rs:93
+#: src/archive_ui.rs:124
 msgid "Format:"
 msgstr "Format:"
 
-#: src/archive_ui.rs:107 src/conflict.rs:97 src/create_entry.rs:132
-#: src/open_with.rs:165 src/progress.rs:153 src/trash_actions.rs:122
-#: src/nextcloud/dialog.rs:75 src/nextcloud/folders_ui.rs:219
-#: src/archive_ui.rs:108 src/create_entry.rs:60 src/create_entry.rs:81
+#: src/archive_ui.rs:138 src/batch_rename.rs:74 src/conflict.rs:97
+#: src/create_entry.rs:132 src/nextcloud/dialog.rs:75
+#: src/nextcloud/folders_ui.rs:219 src/open_with.rs:165 src/progress.rs:156
+#: src/trash_actions.rs:122
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/archive_ui.rs:139 src/create_entry.rs:60 src/create_entry.rs:81
 msgid "Create"
 msgstr "Create"
 
-#: src/archive_ui.rs:167
+#: src/archive_ui.rs:203
 msgid "Compression failed"
 msgstr "Compression failed"
 
-#: src/browser_tab.rs:70 src/pane_view.rs:53
+#: src/batch_rename.rs:22
+msgid "Rename Files"
+msgstr "Rename Files"
+
+#: src/batch_rename.rs:39
+msgid "Find"
+msgstr "Find"
+
+#: src/batch_rename.rs:41
+msgid "Replace with"
+msgstr "Replace with"
+
+#: src/batch_rename.rs:43
+msgid "Find / Replace in original name"
+msgstr "Find / Replace in original name"
+
+#: src/batch_rename.rs:48
+#, rust-format
+msgid "Pattern  ({name} = name, {ext} = extension, {n} = counter)"
+msgstr "Pattern  ({name} = name, {ext} = extension, {n} = counter)"
+
+#: src/batch_rename.rs:56
+msgid "Start counter at"
+msgstr "Start counter at"
+
+#: src/batch_rename.rs:69
+msgid "Preview"
+msgstr "Preview"
+
+#: src/batch_rename.rs:75 src/conflict.rs:93 src/menubar.rs:77 src/rename.rs:28
+#: src/rename.rs:30 src/settings_dialog.rs:223
+msgid "Rename"
+msgstr "Rename"
+
+#: src/batch_rename.rs:110
+msgid "more"
+msgstr "more"
+
+#: src/batch_rename.rs:154
+msgid "Some files could not be renamed"
+msgstr "Some files could not be renamed"
+
+#: src/browser_tab/nav_state.rs:77
+#, rust-format
+msgid "{size} free"
+msgstr "{size} free"
+
+#: src/browser_tab.rs:71 src/pane_view.rs:48
 msgid "Back"
 msgstr "Back"
 
-#: src/browser_tab.rs:71 src/pane_view.rs:54
+#: src/browser_tab.rs:72 src/pane_view.rs:49
 msgid "Forward"
 msgstr "Forward"
 
-#: src/browser_tab.rs:72 src/pane_view.rs:55
+#: src/browser_tab.rs:73 src/pane_view.rs:50
 msgid "Go to parent folder"
 msgstr "Go to parent folder"
 
-#: src/browser_tab.rs:89
-msgid "Toggle icon view"
-msgstr "Toggle icon view"
+#: src/browser_tab.rs:107 src/menubar.rs:93 src/settings_dialog.rs:131
+msgid "Icon View"
+msgstr "Icon View"
 
-#: src/browser_tab.rs:97 src/menubar.rs:73
+#: src/browser_tab.rs:111 src/menubar.rs:94 src/settings_dialog.rs:131
+msgid "List View"
+msgstr "List View"
+
+#: src/browser_tab.rs:116 src/menubar.rs:95 src/settings_dialog.rs:131
+msgid "Compact View"
+msgstr "Compact View"
+
+#: src/browser_tab.rs:128 src/menubar.rs:73
 msgid "Search"
 msgstr "Search"
 
-#: src/browser_tab.rs:153 src/zoom.rs:27
+#: src/browser_tab.rs:177 src/zoom.rs:27
 msgid "Zoom"
 msgstr "Zoom"
 
-#: src/browser_tab.rs:365 src/window.rs:60
+#: src/browser_tab.rs:395 src/window.rs:60
 msgid "Valkyrie"
 msgstr "Valkyrie"
+
+#: src/browser_tab/status_text.rs:16
+msgid "1 item"
+msgid_plural "%d items"
+msgstr[0] "1 item"
+msgstr[1] "%d items"
+
+#: src/browser_tab/status_text.rs:21
+msgid "1 item selected"
+msgid_plural "%d items selected"
+msgstr[0] "1 item selected"
+msgstr[1] "%d items selected"
 
 #: src/conflict.rs:56
 msgid "Name conflict"
@@ -93,15 +163,10 @@ msgstr "A file with this name already exists"
 msgid "Existing"
 msgstr "Existing"
 
-#: src/conflict.rs:81 src/settings_dialog.rs:229
-#: src/context_menu/background.rs:30
+#: src/conflict.rs:81 src/context_menu/background.rs:30
+#: src/settings_dialog.rs:240
 msgid "New"
 msgstr "New"
-
-#: src/conflict.rs:93 src/menubar.rs:77 src/rename.rs:28 src/rename.rs:30
-#: src/settings_dialog.rs:212
-msgid "Rename"
-msgstr "Rename"
 
 #: src/conflict.rs:95
 msgid "Apply to all conflicts"
@@ -119,97 +184,171 @@ msgstr "Modified:"
 msgid "Created:"
 msgstr "Created:"
 
-#: src/context_menu.rs:143 src/open_with.rs:171 src/sidebar/devices.rs:192
-msgid "Open"
-msgstr "Open"
+#: src/context_menu/background.rs:33 src/file_object.rs:235
+#: src/properties.rs:375
+msgid "Folder"
+msgstr "Folder"
 
-#: src/context_menu.rs:151 src/settings_dialog.rs:202 src/sidebar.rs:351
-msgid "Open in New Tab"
-msgstr "Open in New Tab"
+#: src/context_menu/background.rs:38
+msgid "Empty Document"
+msgstr "Empty Document"
 
-#: src/context_menu.rs:158 src/settings_dialog.rs:203 src/sidebar.rs:359
-msgid "Open in New Window"
-msgstr "Open in New Window"
+#: src/context_menu/background.rs:58
+msgid "Open Terminal Here"
+msgstr "Open Terminal Here"
 
-#: src/context_menu.rs:167 src/open_with.rs:68 src/settings_dialog.rs:204
-msgid "Open With"
-msgstr "Open With"
-
-#: src/context_menu.rs:174
-msgid "Restore"
-msgstr "Restore"
-
-#: src/context_menu.rs:179 src/context_menu.rs:281 src/settings_dialog.rs:217
-msgid "Delete Permanently"
-msgstr "Delete Permanently"
-
-#: src/context_menu.rs:189 src/settings_dialog.rs:205
-#: src/context_menu/background.rs:71
-msgid "Open as Administrator"
-msgstr "Open as Administrator"
-
-#: src/context_menu.rs:197 src/settings_dialog.rs:206 src/sidebar.rs:369
-msgid "Open in Terminal"
-msgstr "Open in Terminal"
-
-#: src/context_menu.rs:203 src/settings_dialog.rs:207
-#: src/context_menu/background.rs:64
+#: src/context_menu/background.rs:64 src/context_menu.rs:208
+#: src/settings_dialog.rs:218
 msgid "Open Terminal Panel"
 msgstr "Open Terminal Panel"
 
-#: src/context_menu.rs:213 src/menubar.rs:55 src/settings_dialog.rs:208
-msgid "Cut"
-msgstr "Cut"
+#: src/context_menu/background.rs:71 src/context_menu.rs:195
+#: src/settings_dialog.rs:216
+msgid "Open as Administrator"
+msgstr "Open as Administrator"
 
-#: src/context_menu.rs:220 src/menubar.rs:56 src/settings_dialog.rs:209
-msgid "Copy"
-msgstr "Copy"
+#: src/context_menu/background.rs:79 src/menubar.rs:57
+#: src/settings_dialog.rs:241
+msgid "Paste"
+msgstr "Paste"
 
-#: src/context_menu.rs:227 src/settings_dialog.rs:210
-msgid "Copy Path"
-msgstr "Copy Path"
-
-#: src/context_menu.rs:237
-msgid "Upload to Cloud…"
-msgstr "Upload to Cloud…"
-
-#: src/context_menu.rs:248
-msgid "Sync with Cloud…"
-msgstr "Sync with Cloud…"
-
-#: src/context_menu.rs:263
-msgid "Rename…"
-msgstr "Rename…"
-
-#: src/context_menu.rs:271 src/menubar.rs:78 src/settings_dialog.rs:216
-msgid "Move to Trash"
-msgstr "Move to Trash"
-
-#: src/context_menu.rs:294
-msgid "Remove Bookmark"
-msgstr "Remove Bookmark"
-
-#: src/context_menu.rs:296
-msgid "Add Bookmark"
-msgstr "Add Bookmark"
-
-#: src/context_menu.rs:316 src/settings_dialog.rs:214
-msgid "Extract Here"
-msgstr "Extract Here"
-
-#: src/context_menu.rs:323 src/settings_dialog.rs:215
-#: src/context_menu/background.rs:87
+#: src/context_menu/background.rs:89 src/context_menu.rs:349
+#: src/settings_dialog.rs:226
 msgid "Compress…"
 msgstr "Compress…"
 
-#: src/context_menu.rs:331 src/menubar.rs:40 src/properties.rs:42
-#: src/context_menu/background.rs:128
+#: src/context_menu/background.rs:107 src/menubar.rs:72
+#: src/settings_dialog.rs:242
+msgid "Select All"
+msgstr "Select All"
+
+#: src/context_menu/background.rs:113 src/menubar.rs:105
+msgid "Sort By"
+msgstr "Sort By"
+
+#: src/context_menu/background.rs:121 src/menubar.rs:109
+#: src/settings_dialog.rs:170 src/settings_dialog.rs:244
+msgid "Show Hidden Files"
+msgstr "Show Hidden Files"
+
+#: src/context_menu/background.rs:130 src/context_menu.rs:357 src/menubar.rs:40
+#: src/properties.rs:45
 msgid "Properties"
 msgstr "Properties"
 
-#: src/context_menu.rs:340
+#: src/context_menu/background.rs:150 src/menubar.rs:103
+msgid "Reversed Order"
+msgstr "Reversed Order"
+
+#: src/context_menu/background.rs:159 src/menubar.rs:99 src/properties.rs:207
+#: src/settings_dialog.rs:323 src/view_widgets.rs:41
+msgid "Name"
+msgstr "Name"
+
+#: src/context_menu/background.rs:160 src/menubar.rs:100 src/properties.rs:168
+#: src/settings_dialog.rs:323 src/view_widgets.rs:71
+msgid "Size"
+msgstr "Size"
+
+#: src/context_menu/background.rs:161 src/menubar.rs:101
+#: src/settings_dialog.rs:323 src/view_widgets.rs:88
+msgid "Type"
+msgstr "Type"
+
+#: src/context_menu/background.rs:162 src/menubar.rs:102 src/properties.rs:176
+#: src/view_widgets.rs:105
+msgid "Modified"
+msgstr "Modified"
+
+#: src/context_menu.rs:149 src/open_with.rs:171 src/sidebar/devices.rs:192
+msgid "Open"
+msgstr "Open"
+
+#: src/context_menu.rs:157 src/settings_dialog.rs:212
+#: src/sidebar/devices.rs:200 src/sidebar.rs:351
+msgid "Open in New Tab"
+msgstr "Open in New Tab"
+
+#: src/context_menu.rs:164 src/settings_dialog.rs:213
+#: src/sidebar/devices.rs:207 src/sidebar.rs:359
+msgid "Open in New Window"
+msgstr "Open in New Window"
+
+#: src/context_menu.rs:173 src/open_with.rs:68 src/settings_dialog.rs:214
+msgid "Open With"
+msgstr "Open With"
+
+#: src/context_menu.rs:180
+msgid "Restore"
+msgstr "Restore"
+
+#: src/context_menu.rs:185 src/context_menu.rs:307 src/settings_dialog.rs:228
+msgid "Delete Permanently"
+msgstr "Delete Permanently"
+
+#: src/context_menu.rs:202 src/settings_dialog.rs:217 src/sidebar.rs:369
+msgid "Open in Terminal"
+msgstr "Open in Terminal"
+
+#: src/context_menu.rs:219 src/settings_dialog.rs:215
+msgid "Set as Background"
+msgstr "Set as Background"
+
+#: src/context_menu.rs:229 src/menubar.rs:55 src/settings_dialog.rs:219
+msgid "Cut"
+msgstr "Cut"
+
+#: src/context_menu.rs:238 src/menubar.rs:56 src/settings_dialog.rs:220
+msgid "Copy"
+msgstr "Copy"
+
+#: src/context_menu.rs:246 src/settings_dialog.rs:221
+msgid "Copy Path"
+msgstr "Copy Path"
+
+#: src/context_menu.rs:256
+msgid "Upload to Cloud…"
+msgstr "Upload to Cloud…"
+
+#: src/context_menu.rs:267
+msgid "Sync with Cloud…"
+msgstr "Sync with Cloud…"
+
+#: src/context_menu.rs:283
+msgid "Rename…"
+msgstr "Rename…"
+
+#: src/context_menu.rs:297 src/menubar.rs:78 src/settings_dialog.rs:227
+msgid "Move to Trash"
+msgstr "Move to Trash"
+
+#: src/context_menu.rs:320
+msgid "Remove Bookmark"
+msgstr "Remove Bookmark"
+
+#: src/context_menu.rs:322
+msgid "Add Bookmark"
+msgstr "Add Bookmark"
+
+#: src/context_menu.rs:342 src/settings_dialog.rs:225
+msgid "Extract Here"
+msgstr "Extract Here"
+
+#: src/context_menu.rs:366 src/sidebar.rs:377
 msgid "Empty Trash…"
 msgstr "Empty Trash…"
+
+#: src/context_menu.rs:461
+msgid "Could not open as administrator"
+msgstr "Could not open as administrator"
+
+#: src/context_menu/xfer.rs:31 src/menubar.rs:62
+msgid "Copy to Other Pane"
+msgstr "Copy to Other Pane"
+
+#: src/context_menu/xfer.rs:37 src/menubar.rs:66
+msgid "Move to Other Pane"
+msgstr "Move to Other Pane"
 
 #: src/create_entry.rs:58 src/create_entry.rs:59 src/menubar.rs:35
 msgid "New Folder"
@@ -224,14 +363,9 @@ msgid "New Document"
 msgstr "New Document"
 
 #: src/create_entry.rs:183 src/create_entry.rs:199 src/create_entry.rs:213
-#: src/properties.rs:105
+#: src/properties.rs:107
 msgid "Permissions"
 msgstr "Permissions"
-
-#: src/file_object.rs:199 src/properties.rs:305
-#: src/context_menu/background.rs:33
-msgid "Folder"
-msgstr "Folder"
 
 #: src/menubar.rs:18
 msgid "_File"
@@ -261,83 +395,23 @@ msgstr "New Window"
 msgid "Quit"
 msgstr "Quit"
 
-#: src/menubar.rs:57 src/settings_dialog.rs:230
-#: src/context_menu/background.rs:79
-msgid "Paste"
-msgstr "Paste"
-
-#: src/menubar.rs:62 src/context_menu/xfer.rs:31
-msgid "Copy to Other Pane"
-msgstr "Copy to Other Pane"
-
-#: src/menubar.rs:66 src/context_menu/xfer.rs:37
-msgid "Move to Other Pane"
-msgstr "Move to Other Pane"
-
-#: src/menubar.rs:72 src/settings_dialog.rs:231
-#: src/context_menu/background.rs:105
-msgid "Select All"
-msgstr "Select All"
-
 #: src/menubar.rs:82 src/settings_dialog.rs:68
 msgid "Preferences"
 msgstr "Preferences"
 
-#: src/menubar.rs:93 src/settings_dialog.rs:125
-msgid "Icon View"
-msgstr "Icon View"
-
-#: src/menubar.rs:94 src/settings_dialog.rs:125
-msgid "List View"
-msgstr "List View"
-
-#: src/menubar.rs:98 src/properties.rs:142 src/settings_dialog.rs:312
-#: src/view_widgets.rs:41 src/context_menu/background.rs:157
-msgid "Name"
-msgstr "Name"
-
-#: src/menubar.rs:99 src/properties.rs:160 src/settings_dialog.rs:312
-#: src/view_widgets.rs:71 src/context_menu/background.rs:158
-msgid "Size"
-msgstr "Size"
-
-#: src/menubar.rs:100 src/settings_dialog.rs:312 src/view_widgets.rs:88
-#: src/context_menu/background.rs:159
-msgid "Type"
-msgstr "Type"
-
-#: src/menubar.rs:101 src/properties.rs:168 src/view_widgets.rs:105
-#: src/context_menu/background.rs:160
-msgid "Modified"
-msgstr "Modified"
-
-#: src/menubar.rs:102 src/context_menu/background.rs:148
-msgid "Reversed Order"
-msgstr "Reversed Order"
-
-#: src/menubar.rs:104 src/settings_dialog.rs:232
-#: src/context_menu/background.rs:111
-msgid "Sort By"
-msgstr "Sort By"
-
-#: src/menubar.rs:108 src/settings_dialog.rs:160 src/settings_dialog.rs:233
-#: src/context_menu/background.rs:119
-msgid "Show Hidden Files"
-msgstr "Show Hidden Files"
-
-#: src/menubar.rs:112
+#: src/menubar.rs:113
 msgid "Split View"
 msgstr "Split View"
 
-#: src/menubar.rs:113
+#: src/menubar.rs:114
 msgid "Terminal Panel"
 msgstr "Terminal Panel"
 
-#: src/menubar.rs:117
+#: src/menubar.rs:118
 msgid "Reload"
 msgstr "Reload"
 
-#: src/menubar.rs:127
+#: src/menubar.rs:128
 msgid "About Valkyrie"
 msgstr "About Valkyrie"
 
@@ -353,11 +427,11 @@ msgstr "Write"
 msgid "Execute"
 msgstr "Execute"
 
-#: src/mode_editor.rs:98 src/properties_perms.rs:58
+#: src/mode_editor.rs:98 src/properties_perms.rs:68
 msgid "Owner"
 msgstr "Owner"
 
-#: src/mode_editor.rs:98 src/properties_perms.rs:59
+#: src/mode_editor.rs:98 src/properties_perms.rs:86
 msgid "Group"
 msgstr "Group"
 
@@ -380,389 +454,6 @@ msgstr "Could not unmount the volume"
 #: src/mount_ops.rs:127
 msgid "Could not eject the volume"
 msgstr "Could not eject the volume"
-
-#: src/nextcloud.rs:170
-msgid "Could not connect to cloud server"
-msgstr "Could not connect to cloud server"
-
-#: src/open_with.rs:44
-msgid "Other Application…"
-msgstr "Other Application…"
-
-#: src/open_with.rs:153
-msgid "Always use for"
-msgstr "Always use for"
-
-#: src/open_with.rs:212
-msgid "this file type"
-msgstr "this file type"
-
-#: src/operations.rs:130
-msgid "Could not move to trash"
-msgstr "Could not move to trash"
-
-#: src/operations.rs:142 src/operations.rs:145
-msgid "This item will be deleted permanently. This cannot be undone."
-msgid_plural "These items will be deleted permanently. This cannot be undone."
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/operations.rs:150 src/trash_actions.rs:78
-msgid "Delete permanently?"
-msgstr "Delete permanently?"
-
-#: src/operations.rs:249
-msgid "File operation failed"
-msgstr "File operation failed"
-
-#: src/operations.rs:263
-msgid "File operation finished"
-msgstr "File operation finished"
-
-#: src/progress.rs:136
-msgid "Verify integrity"
-msgstr "Verify integrity"
-
-#: src/progress.rs:138
-msgid "Hash each copied file and compare it with the source (BLAKE3)"
-msgstr "Hash each copied file and compare it with the source (BLAKE3)"
-
-#: src/progress.rs:240
-msgid "Integrity check failed for %d file"
-msgid_plural "Integrity check failed for %d files"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/progress.rs:250
-msgid "Integrity verified for %d file"
-msgid_plural "Integrity verified for %d files"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/progress.rs:273
-msgid "verifying…"
-msgstr "verifying…"
-
-#: src/progress.rs:335
-msgid "%d/%d verified"
-msgstr "%d/%d verified"
-
-#: src/progress.rs:348
-msgid "~%d s"
-msgstr "~%d s"
-
-#: src/progress.rs:350
-msgid "~%d min"
-msgstr "~%d min"
-
-#: src/properties.rs:102
-msgid "Basic"
-msgstr "Basic"
-
-#: src/properties.rs:144
-msgid "Location"
-msgstr "Location"
-
-#: src/properties.rs:153
-msgid "Contents"
-msgstr "Contents"
-
-#: src/properties.rs:169
-msgid "Accessed"
-msgstr "Accessed"
-
-#: src/properties.rs:170
-msgid "Created"
-msgstr "Created"
-
-#: src/properties.rs:184
-msgid "Free Space"
-msgstr "Free Space"
-
-#: src/properties.rs:201
-msgid "Counting…"
-msgstr "Counting…"
-
-#: src/properties.rs:233
-#, rust-format
-msgid "{items} items"
-msgstr "{items} items"
-
-#: src/rename.rs:39
-msgid "Could not rename"
-msgstr "Could not rename"
-
-#: src/settings_dialog.rs:85
-msgid "View"
-msgstr "View"
-
-#: src/settings_dialog.rs:86
-msgid "Sorting"
-msgstr "Sorting"
-
-#: src/settings_dialog.rs:87 src/terminal_panel.rs:58
-msgid "Terminal"
-msgstr "Terminal"
-
-#: src/settings_dialog.rs:91
-msgid "File operations"
-msgstr "File operations"
-
-#: src/settings_dialog.rs:93 src/trash_actions.rs:122
-msgid "Delete"
-msgstr "Delete"
-
-#: src/settings_dialog.rs:97
-msgid "Context menu"
-msgstr "Context menu"
-
-#: src/settings_dialog.rs:102
-msgid "Cloud (WebDAV)"
-msgstr "Cloud (WebDAV)"
-
-#: src/settings_dialog.rs:142
-msgid "Default View"
-msgstr "Default View"
-
-#: src/settings_dialog.rs:169
-msgid "Default Icon Size"
-msgstr "Default Icon Size"
-
-#: src/settings_dialog.rs:196
-msgid "On files and folders"
-msgstr "On files and folders"
-
-#: src/settings_dialog.rs:211
-msgid "Upload/Sync with Cloud"
-msgstr "Upload/Sync with Cloud"
-
-#: src/settings_dialog.rs:213
-msgid "Add/Remove Bookmark"
-msgstr "Add/Remove Bookmark"
-
-#: src/settings_dialog.rs:222
-msgid "On empty space"
-msgstr "On empty space"
-
-#: src/settings_dialog.rs:237
-msgid ""
-"\"Open\" and \"Properties\" always stay. Entries apply wherever they exist — "
-"file rows and empty space alike."
-msgstr ""
-
-#: src/settings_dialog.rs:260
-msgid "Limited effectiveness on this storage"
-msgstr "Limited effectiveness on this storage"
-
-#: src/settings_dialog.rs:261
-msgid ""
-"This medium (SSD or copy-on-write filesystem) cannot guarantee that "
-"overwritten data is unrecoverable — wear leveling and snapshots may keep "
-"stale copies. The feature stays enabled, but treat it as best-effort, not a "
-"security promise."
-msgstr ""
-
-#: src/settings_dialog.rs:262
-msgid "Understood"
-msgstr "Understood"
-
-#: src/settings_dialog.rs:275
-msgid "Overwrite files when deleting permanently"
-msgstr "Overwrite files when deleting permanently"
-
-#: src/settings_dialog.rs:289
-msgid "Overwrite passes"
-msgstr "Overwrite passes"
-
-#: src/settings_dialog.rs:293
-msgid ""
-"Only applies to permanent deletion (Shift+Delete). The trash stays untouched."
-msgstr ""
-
-#: src/settings_dialog.rs:312
-msgid "Modification Date"
-msgstr "Modification Date"
-
-#: src/settings_dialog.rs:325
-msgid "Default Sort Field"
-msgstr "Default Sort Field"
-
-#: src/settings_dialog.rs:342
-msgid "Sort Descending"
-msgstr "Sort Descending"
-
-#: src/settings_dialog.rs:365
-msgid "Automatic detection"
-msgstr "Automatic detection"
-
-#: src/settings_dialog.rs:381
-msgid "Terminal Emulator"
-msgstr "Terminal Emulator"
-
-#: src/settings_dialog.rs:385
-msgid ""
-"Used by \"Open Terminal Here\" — Automatic picks the first installed "
-"emulator."
-msgstr ""
-
-#: src/settings_dialog.rs:404
-msgid "Copy files in parallel"
-msgstr "Copy files in parallel"
-
-#: src/settings_dialog.rs:414
-msgid "Copy workers"
-msgstr "Copy workers"
-
-#: src/settings_dialog.rs:424
-msgid ""
-"This machine has %d CPU cores — 2–4 workers are usually optimal on SSDs; on "
-"hard disks or network drives parallel copying can be slower."
-msgstr ""
-
-#: src/settings_dialog.rs:446
-msgid "Server"
-msgstr "Server"
-
-#: src/settings_dialog.rs:449
-msgid ""
-"Nextcloud/ownCloud: host only is enough — the endpoint /remote.php/dav/files/"
-"<user> is assumed. Other WebDAV providers: enter the full URL including the "
-"path."
-msgstr ""
-
-#: src/settings_dialog.rs:458
-msgid "Username"
-msgstr "Username"
-
-#: src/settings_dialog.rs:471
-msgid "Enter server and username first"
-msgstr "Enter server and username first"
-
-#: src/settings_dialog.rs:473
-msgid "Password stored — encrypted in the system keyring"
-msgstr "Password stored — encrypted in the system keyring"
-
-#: src/settings_dialog.rs:475
-msgid "No password stored yet"
-msgstr "No password stored yet"
-
-#: src/settings_dialog.rs:494
-msgid "App Password"
-msgstr "App Password"
-
-#: src/settings_dialog.rs:500
-msgid "Forget Password"
-msgstr "Forget Password"
-
-#: src/settings_dialog.rs:515
-msgid ""
-"The password is stored encrypted in the system keyring, never as plain text."
-msgstr ""
-
-#: src/sidebar.rs:188
-msgid "Places"
-msgstr "Places"
-
-#: src/sidebar.rs:190
-msgid "Home"
-msgstr "Home"
-
-#: src/sidebar.rs:196
-msgid "Desktop"
-msgstr "Desktop"
-
-#: src/sidebar.rs:203
-msgid "Recent"
-msgstr "Recent"
-
-#: src/sidebar.rs:208
-msgid "File System"
-msgstr "File System"
-
-#: src/sidebar.rs:213
-msgid "Trash"
-msgstr "Trash"
-
-#: src/sidebar.rs:218
-msgid "Bookmarks"
-msgstr "Bookmarks"
-
-#: src/sidebar.rs:221
-msgid "Devices"
-msgstr "Devices"
-
-#: src/sidebar.rs:224
-msgid "Network"
-msgstr "Network"
-
-#: src/sidebar.rs:227
-msgid "Browse Network"
-msgstr "Browse Network"
-
-#: src/sidebar.rs:253
-msgid "Cloud"
-msgstr "Cloud"
-
-#: src/terminal_panel.rs:65
-msgid "Close Terminal Panel"
-msgstr "Close Terminal Panel"
-
-#: src/trash_actions.rs:48 src/trash_actions.rs:68
-msgid "Could not restore the item"
-msgstr "Could not restore the item"
-
-#: src/trash_actions.rs:79
-msgid "This item will be gone for good."
-msgstr "This item will be gone for good."
-
-#: src/trash_actions.rs:91
-msgid "Empty the trash?"
-msgstr "Empty the trash?"
-
-#: src/trash_actions.rs:92
-msgid "All items in the trash will be deleted permanently."
-msgstr "All items in the trash will be deleted permanently."
-
-#: src/undo.rs:39
-msgid "Undo Copy"
-msgstr "Undo Copy"
-
-#: src/undo.rs:40
-msgid "Undo Move"
-msgstr "Undo Move"
-
-#: src/undo.rs:41
-msgid "Undo Trash"
-msgstr "Undo Trash"
-
-#: src/window_actions.rs:385
-msgid ""
-"The LieraOS file manager.\n"
-"\n"
-"Attribution notice (GPLv3 §7(b)): The author attribution \"Jörg Schröder\" "
-"must be preserved in source file headers and in this About dialog or "
-"equivalent legal notices."
-msgstr ""
-
-#: src/browser_tab/status_text.rs:16
-msgid "1 item"
-msgid_plural "%d items"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/browser_tab/status_text.rs:21
-msgid "1 item selected"
-msgid_plural "%d items selected"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/context_menu/background.rs:38
-msgid "Empty Document"
-msgstr "Empty Document"
-
-#: src/context_menu/background.rs:58
-msgid "Open Terminal Here"
-msgstr "Open Terminal Here"
 
 #: src/nextcloud/dialog.rs:25
 msgid "Upload to Cloud"
@@ -880,101 +571,473 @@ msgstr "Synchronize"
 msgid "Save"
 msgstr "Save"
 
+#: src/nextcloud.rs:191
+msgid "Could not connect to cloud server"
+msgstr "Could not connect to cloud server"
+
 #: src/nextcloud/sync.rs:88
 msgid "Synchronizing…"
 msgstr "Synchronizing…"
 
-#: src/progress/jobs.rs:42
+#: src/open_with.rs:44
+msgid "Other Application…"
+msgstr "Other Application…"
+
+#: src/open_with.rs:153
+msgid "Always use for"
+msgstr "Always use for"
+
+#: src/open_with.rs:212
+msgid "this file type"
+msgstr "this file type"
+
+#: src/operations.rs:173
+msgid "Could not move to trash"
+msgstr "Could not move to trash"
+
+#: src/operations.rs:188
+msgid "This item will be deleted permanently. This cannot be undone."
+msgid_plural "These items will be deleted permanently. This cannot be undone."
+msgstr[0] "This item will be deleted permanently. This cannot be undone."
+msgstr[1] "These items will be deleted permanently. This cannot be undone."
+
+#: src/operations.rs:192 src/trash_actions.rs:78
+msgid "Delete permanently?"
+msgstr "Delete permanently?"
+
+#: src/operations.rs:291
+msgid "File operation failed"
+msgstr "File operation failed"
+
+#: src/operations.rs:305
+msgid "File operation finished"
+msgstr "File operation finished"
+
+#: src/progress/jobs.rs:32
 msgid "Moving…"
 msgstr "Moving…"
 
-#: src/progress/jobs.rs:44
+#: src/progress/jobs.rs:34
 msgid "Copying…"
 msgstr "Copying…"
 
-#: src/progress/jobs.rs:63
+#: src/progress/jobs.rs:46
 msgid "Preparing"
 msgstr "Preparing"
 
-#: src/progress/jobs.rs:275
+#: src/progress/jobs.rs:259
 msgid "Deleting…"
 msgstr "Deleting…"
 
-#: src/sidebar/devices.rs:109 src/sidebar/devices.rs:208
-msgid "Eject"
-msgstr "Eject"
+#: src/progress.rs:139
+msgid "Verify integrity"
+msgstr "Verify integrity"
 
-#: src/sidebar/devices.rs:109 src/sidebar/devices.rs:199
-msgid "Unmount"
-msgstr "Unmount"
+#: src/progress.rs:141
+msgid "Hash each copied file and compare it with the source (BLAKE3)"
+msgstr "Hash each copied file and compare it with the source (BLAKE3)"
 
-#: src/sidebar/devices.rs:219
-msgid "Mount"
-msgstr "Mount"
+#: src/progress.rs:198
+msgid "Writing to device…"
+msgstr "Writing to device…"
 
-msgid "Could not rename the file"
-msgstr "Could not rename the file"
+#: src/progress.rs:249
+msgid "Integrity check failed for %d file"
+msgid_plural "Integrity check failed for %d files"
+msgstr[0] "Integrity check failed for %d file"
+msgstr[1] "Integrity check failed for %d files"
 
+#: src/progress.rs:259
+msgid "Integrity verified for %d file"
+msgid_plural "Integrity verified for %d files"
+msgstr[0] "Integrity verified for %d file"
+msgstr[1] "Integrity verified for %d files"
+
+#: src/progress.rs:282
+msgid "verifying…"
+msgstr "verifying…"
+
+#: src/progress.rs:344
+msgid "%d/%d verified"
+msgstr "%d/%d verified"
+
+#: src/progress.rs:357
+msgid "~%d s"
+msgstr "~%d s"
+
+#: src/progress.rs:359
+msgid "~%d min"
+msgstr "~%d min"
+
+#: src/properties_perms.rs:197 src/properties_perms.rs:335
 msgid "Could not change owner"
 msgstr "Could not change owner"
 
+#: src/properties_perms.rs:199 src/properties_perms.rs:337
 msgid "Could not change group"
 msgstr "Could not change group"
 
-msgid "Could not open as administrator"
-msgstr "Could not open as administrator"
+#: src/properties.rs:104
+msgid "Basic"
+msgstr "Basic"
 
-msgid "Set as Background"
-msgstr "Set as Background"
+#: src/properties.rs:152
+msgid "Location"
+msgstr "Location"
 
+#: src/properties.rs:161
+msgid "Contents"
+msgstr "Contents"
+
+#: src/properties.rs:177
+msgid "Accessed"
+msgstr "Accessed"
+
+#: src/properties.rs:178
+msgid "Created"
+msgstr "Created"
+
+#: src/properties.rs:192
+msgid "Free Space"
+msgstr "Free Space"
+
+#: src/properties.rs:243
+msgid "Could not rename the file"
+msgstr "Could not rename the file"
+
+#: src/properties.rs:271
+msgid "Counting…"
+msgstr "Counting…"
+
+#: src/properties.rs:303
+#, rust-format
+msgid "{items} items"
+msgstr "{items} items"
+
+#: src/rename.rs:39
+msgid "Could not rename"
+msgstr "Could not rename"
+
+#: src/settings_dialog.rs:85
+msgid "View"
+msgstr "View"
+
+#: src/settings_dialog.rs:86
+msgid "Sorting"
+msgstr "Sorting"
+
+#: src/settings_dialog.rs:87 src/terminal_panel.rs:58
+msgid "Terminal"
+msgstr "Terminal"
+
+#: src/settings_dialog.rs:91
 msgid "Thumbnails"
 msgstr "Thumbnails"
 
-msgid "Generate preview thumbnails per file type. In \"Up to\" mode files above the size limit show the plain type icon instead."
-msgstr "Generate preview thumbnails per file type. In \"Up to\" mode files above the size limit show the plain type icon instead."
+#: src/settings_dialog.rs:96
+msgid "File operations"
+msgstr "File operations"
 
-msgid "Always"
-msgstr "Always"
+#: src/settings_dialog.rs:98 src/trash_actions.rs:122
+msgid "Delete"
+msgstr "Delete"
 
-msgid "Only up to"
-msgstr "Only up to"
+#: src/settings_dialog.rs:102
+msgid "Context menu"
+msgstr "Context menu"
 
-msgid "Never"
-msgstr "Never"
+#: src/settings_dialog.rs:107
+msgid "Cloud (WebDAV)"
+msgstr "Cloud (WebDAV)"
 
+#: src/settings_dialog.rs:152
+msgid "Default View"
+msgstr "Default View"
+
+#: src/settings_dialog.rs:179
+msgid "Default Icon Size"
+msgstr "Default Icon Size"
+
+#: src/settings_dialog.rs:206
+msgid "On files and folders"
+msgstr "On files and folders"
+
+#: src/settings_dialog.rs:222
+msgid "Upload/Sync with Cloud"
+msgstr "Upload/Sync with Cloud"
+
+#: src/settings_dialog.rs:224
+msgid "Add/Remove Bookmark"
+msgstr "Add/Remove Bookmark"
+
+#: src/settings_dialog.rs:233
+msgid "On empty space"
+msgstr "On empty space"
+
+#: src/settings_dialog.rs:243
+msgid "Arrange Items"
+msgstr "Arrange Items"
+
+#: src/settings_dialog.rs:248
+msgid ""
+"\"Open\" and \"Properties\" always stay. Entries apply wherever they exist — "
+"file rows and empty space alike."
+msgstr ""
+"\"Open\" and \"Properties\" always stay. Entries apply wherever they exist — "
+"file rows and empty space alike."
+
+#: src/settings_dialog.rs:271
+msgid "Limited effectiveness on this storage"
+msgstr "Limited effectiveness on this storage"
+
+#: src/settings_dialog.rs:272
+msgid ""
+"This medium (SSD or copy-on-write filesystem) cannot guarantee that "
+"overwritten data is unrecoverable — wear leveling and snapshots may keep "
+"stale copies. The feature stays enabled, but treat it as best-effort, not a "
+"security promise."
+msgstr ""
+"This medium (SSD or copy-on-write filesystem) cannot guarantee that "
+"overwritten data is unrecoverable — wear leveling and snapshots may keep "
+"stale copies. The feature stays enabled, but treat it as best-effort, not a "
+"security promise."
+
+#: src/settings_dialog.rs:273
+msgid "Understood"
+msgstr "Understood"
+
+#: src/settings_dialog.rs:286
+msgid "Overwrite files when deleting permanently"
+msgstr "Overwrite files when deleting permanently"
+
+#: src/settings_dialog.rs:300
+msgid "Overwrite passes"
+msgstr "Overwrite passes"
+
+#: src/settings_dialog.rs:304
+msgid ""
+"Only applies to permanent deletion (Shift+Delete). The trash stays untouched."
+msgstr ""
+"Only applies to permanent deletion (Shift+Delete). The trash stays untouched."
+
+#: src/settings_dialog.rs:323
+msgid "Modification Date"
+msgstr "Modification Date"
+
+#: src/settings_dialog.rs:336
+msgid "Default Sort Field"
+msgstr "Default Sort Field"
+
+#: src/settings_dialog.rs:353
+msgid "Sort Descending"
+msgstr "Sort Descending"
+
+#: src/settings_dialog.rs:376
+msgid "Automatic detection"
+msgstr "Automatic detection"
+
+#: src/settings_dialog.rs:392
+msgid "Terminal Emulator"
+msgstr "Terminal Emulator"
+
+#: src/settings_dialog.rs:396
+msgid ""
+"Used by \"Open Terminal Here\" — Automatic picks the first installed "
+"emulator."
+msgstr ""
+"Used by \"Open Terminal Here\" — Automatic picks the first installed "
+"emulator."
+
+#: src/settings_dialog.rs:415
+msgid "Copy files in parallel"
+msgstr "Copy files in parallel"
+
+#: src/settings_dialog.rs:425
+msgid "Copy workers"
+msgstr "Copy workers"
+
+#: src/settings_dialog.rs:435
+msgid ""
+"This machine has %d CPU cores — 2–4 workers are usually optimal on SSDs; on "
+"hard disks or network drives parallel copying can be slower."
+msgstr ""
+"This machine has %d CPU cores — 2–4 workers are usually optimal on SSDs; on "
+"hard disks or network drives parallel copying can be slower."
+
+#: src/settings_dialog.rs:457
+msgid "Server"
+msgstr "Server"
+
+#: src/settings_dialog.rs:460
+msgid ""
+"Nextcloud/ownCloud: host only is enough — the endpoint /remote.php/dav/files/"
+"<user> is assumed. Other WebDAV providers: enter the full URL including the "
+"path."
+msgstr ""
+"Nextcloud/ownCloud: host only is enough — the endpoint /remote.php/dav/files/"
+"<user> is assumed. Other WebDAV providers: enter the full URL including the "
+"path."
+
+#: src/settings_dialog.rs:469
+msgid "Username"
+msgstr "Username"
+
+#: src/settings_dialog.rs:482
+msgid "Enter server and username first"
+msgstr "Enter server and username first"
+
+#: src/settings_dialog.rs:484
+msgid "Password stored — encrypted in the system keyring"
+msgstr "Password stored — encrypted in the system keyring"
+
+#: src/settings_dialog.rs:486
+msgid "No password stored yet"
+msgstr "No password stored yet"
+
+#: src/settings_dialog.rs:505
+msgid "App Password"
+msgstr "App Password"
+
+#: src/settings_dialog.rs:511
+msgid "Forget Password"
+msgstr "Forget Password"
+
+#: src/settings_dialog.rs:526
+msgid ""
+"The password is stored encrypted in the system keyring, never as plain text."
+msgstr ""
+"The password is stored encrypted in the system keyring, never as plain text."
+
+#: src/settings_dialog.rs:543
+msgid ""
+"Generate preview thumbnails per file type. In \"Up to\" mode files above the "
+"size limit show the plain type icon instead."
+msgstr ""
+"Generate preview thumbnails per file type. In \"Up to\" mode files above the "
+"size limit show the plain type icon instead."
+
+#: src/settings_dialog.rs:546
 msgid "Images"
 msgstr "Images"
 
+#: src/settings_dialog.rs:547
 msgid "Videos"
 msgstr "Videos"
 
+#: src/settings_dialog.rs:548
 msgid "PDFs"
 msgstr "PDFs"
 
-msgid "Rename Files"
-msgstr "Rename Files"
+#: src/settings_dialog.rs:563
+msgid "Always"
+msgstr "Always"
 
-msgid "Replace with"
-msgstr "Replace with"
+#: src/settings_dialog.rs:563
+msgid "Only up to"
+msgstr "Only up to"
 
-msgid "Find / Replace in original name"
-msgstr "Find / Replace in original name"
+#: src/settings_dialog.rs:563
+msgid "Never"
+msgstr "Never"
 
-msgid "Pattern  ({name} = name, {ext} = extension, {n} = counter)"
-msgstr "Pattern  ({name} = name, {ext} = extension, {n} = counter)"
+#: src/sidebar/devices.rs:109 src/sidebar/devices.rs:223
+msgid "Eject"
+msgstr "Eject"
 
-msgid "Start counter at"
-msgstr "Start counter at"
+#: src/sidebar/devices.rs:109 src/sidebar/devices.rs:214
+msgid "Unmount"
+msgstr "Unmount"
 
-msgid "more"
-msgstr "more"
+#: src/sidebar/devices.rs:234
+msgid "Mount"
+msgstr "Mount"
 
-msgid "Some files could not be renamed"
-msgstr "Some files could not be renamed"
+#: src/sidebar.rs:188
+msgid "Places"
+msgstr "Places"
 
-msgid "{size} free"
-msgstr "{size} free"
+#: src/sidebar.rs:190
+msgid "Home"
+msgstr "Home"
 
-#: src/progress.rs:199
-msgid "Writing to device…"
-msgstr "Writing to device…"
+#: src/sidebar.rs:196
+msgid "Desktop"
+msgstr "Desktop"
+
+#: src/sidebar.rs:203
+msgid "Recent"
+msgstr "Recent"
+
+#: src/sidebar.rs:208
+msgid "File System"
+msgstr "File System"
+
+#: src/sidebar.rs:213
+msgid "Trash"
+msgstr "Trash"
+
+#: src/sidebar.rs:218
+msgid "Bookmarks"
+msgstr "Bookmarks"
+
+#: src/sidebar.rs:221
+msgid "Devices"
+msgstr "Devices"
+
+#: src/sidebar.rs:224
+msgid "Network"
+msgstr "Network"
+
+#: src/sidebar.rs:227
+msgid "Browse Network"
+msgstr "Browse Network"
+
+#: src/sidebar.rs:253
+msgid "Cloud"
+msgstr "Cloud"
+
+#: src/terminal_panel.rs:65
+msgid "Close Terminal Panel"
+msgstr "Close Terminal Panel"
+
+#: src/trash_actions.rs:48 src/trash_actions.rs:68
+msgid "Could not restore the item"
+msgstr "Could not restore the item"
+
+#: src/trash_actions.rs:79
+msgid "This item will be gone for good."
+msgstr "This item will be gone for good."
+
+#: src/trash_actions.rs:91
+msgid "Empty the trash?"
+msgstr "Empty the trash?"
+
+#: src/trash_actions.rs:92
+msgid "All items in the trash will be deleted permanently."
+msgstr "All items in the trash will be deleted permanently."
+
+#: src/undo.rs:39
+msgid "Undo Copy"
+msgstr "Undo Copy"
+
+#: src/undo.rs:40
+msgid "Undo Move"
+msgstr "Undo Move"
+
+#: src/undo.rs:41
+msgid "Undo Trash"
+msgstr "Undo Trash"
+
+#: src/window_actions.rs:386
+msgid ""
+"The LieraOS file manager.\n"
+"\n"
+"Attribution notice (GPLv3 §7(b)): The author attribution \"Jörg Schröder\" "
+"must be preserved in source file headers and in this About dialog or "
+"equivalent legal notices."
+msgstr ""
+"The LieraOS file manager.\n"
+"\n"
+"Attribution notice (GPLv3 §7(b)): The author attribution \"Jörg Schröder\" "
+"must be preserved in source file headers and in this About dialog or "
+"equivalent legal notices."

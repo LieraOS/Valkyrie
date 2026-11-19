@@ -124,23 +124,28 @@ pub fn show(this: &Rc<ValkyrieWindow>) {
 fn view_page(this: &Rc<ValkyrieWindow>) -> gtk4::Box {
     let page = page();
 
-    // Default view: icon grid or details list. Applied to every open
-    // tab immediately — the persisted key seeds new windows/tabs.
+    // Default view: icon grid, details list or compact list.
+    // Applied to every open tab immediately — the persisted key
+    // seeds new windows/tabs.
     let view_mode = dropdown(
-        &[tr("Icon View"), tr("List View")],
-        if crate::settings::view_mode() == "icons" {
-            0
-        } else {
-            1
+        &[tr("Icon View"), tr("List View"), tr("Compact View")],
+        match crate::settings::view_mode().as_str() {
+            "list" => 1,
+            "compact" => 2,
+            _ => 0,
         },
     );
     {
         let weak = Rc::downgrade(this);
         view_mode.connect_selected_notify(move |dd| {
-            let icons = dd.selected() == 0;
-            crate::settings::set_view_mode(if icons { "icons" } else { "list" });
+            let mode = match dd.selected() {
+                1 => crate::file_view::ViewMode::List,
+                2 => crate::file_view::ViewMode::Compact,
+                _ => crate::file_view::ViewMode::Icons,
+            };
+            crate::settings::set_view_mode(mode.as_str());
             if let Some(this) = weak.upgrade() {
-                this.for_each_tab(|tab| tab.set_icon_mode(icons));
+                this.for_each_tab(|tab| tab.set_view_mode(mode));
             }
         });
     }

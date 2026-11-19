@@ -23,8 +23,13 @@ pub enum VerifyResult {
 
 /// Integrity-check control handed to `copy_tree`. `enabled` is
 /// sampled before *each* file so the dialog toggle reacts mid-tree;
-/// `report` receives the per-file outcome.
+/// `report` receives the per-file outcome. When `lane` is set, the
+/// destination re-hash runs on the background verify lane instead of
+/// stalling the copy loop (see src/verify_lane.rs).
 pub struct VerifyCtl<'a> {
     pub enabled: &'a dyn Fn() -> bool,
     pub report: &'a mut dyn FnMut(&str, VerifyResult),
+    /// Background verify lane shared with the pool path — the batch
+    /// end waits on its drain, so "done" still means fully verified.
+    pub lane: Option<&'a crate::verify_lane::VerifyLane>,
 }

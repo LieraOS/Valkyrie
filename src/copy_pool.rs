@@ -46,6 +46,10 @@ pub struct PoolCfg {
     pub report: ReportFn,
     /// Per-file verify outcome channel (None when no verify flag).
     pub verify_report: Option<VerifyReportFn>,
+    /// Background verify lane — workers queue freshly copied files
+    /// instead of blocking on the destination re-hash. When absent,
+    /// verification runs inline (legacy path used by tests).
+    pub verify_lane: Option<Arc<crate::verify_lane::VerifyLane>>,
     /// Removable-target mode: workers pace their writes so progress
     /// reflects real device speed on slow media.
     pub paced: bool,
@@ -194,18 +198,30 @@ fn process(shared: &Arc<Shared>, cfg: &Arc<PoolCfg>, job: Job) {
             if !want {
                 return;
             }
-            let result = match outcome {
-                CopyOutcome::Reflinked => VerifyResult::Reflinked,
-                CopyOutcome::Copied(src_hash) => {
-                    match (src_hash, fast_copy::hash_file(&job.dst, &cfg.cancel)) {
-                        (Some(a), Ok(b)) if a == b => VerifyResult::Verified,
-                        (Some(_), Ok(_)) => VerifyResult::Mismatch,
-                        _ => VerifyResult::Unverifiable,
+            match outcome {
+                CopyOutcome::Reflinked => {
+                    if let Some(report) = &cfg.verify_report {
+                        report(&name, VerifyResult::Reflinked);
                     }
                 }
-            };
-            if let Some(report) = &cfg.verify_report {
-                report(&name, result);
+                CopyOutcome::Copied(src_hash) => {
+                    // Lane present: the destination re-hash runs on
+                    // the background thread — this worker takes the
+                    // next copy job immediately instead of stalling
+                    // the bar on a device re-read.
+                    if let Some(lane) = &cfg.verify_lane {
+                        lane.submit(name, job.dst, src_hash);
+                    } else {
+                        let result = match (src_hash, fast_copy::hash_file(&job.dst, &cfg.cancel)) {
+                            (Some(a), Ok(b)) if a == b => VerifyResult::Verified,
+                            (Some(_), Ok(_)) => VerifyResult::Mismatch,
+                            _ => VerifyResult::Unverifiable,
+                        };
+                        if let Some(report) = &cfg.verify_report {
+                            report(&name, result);
+                        }
+                    }
+                }
             }
         }
         Err(e) => {

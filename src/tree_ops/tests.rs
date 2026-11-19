@@ -251,6 +251,7 @@ fn copy_tree_verifies_or_reflinks() {
         let ctl = VerifyCtl {
             enabled: &|| enabled.get(),
             report: &mut |name: &str, r: VerifyResult| results.push((name.to_string(), r)),
+            lane: None,
         };
         copy_tree(
             &f,
@@ -301,6 +302,7 @@ fn copy_tree_reports_mismatch_when_destination_corrupts() {
     let ctl = VerifyCtl {
         enabled: &|| true,
         report: &mut |name: &str, r: VerifyResult| results.push((name.to_string(), r)),
+        lane: None,
     };
     // The copy itself may fail (trash backend rejects plain writes);
     // the contract being tested is purely the reporting path.

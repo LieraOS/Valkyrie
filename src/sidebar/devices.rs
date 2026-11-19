@@ -178,6 +178,18 @@ impl Sidebar {
             }
             if let Some(root) = pop.root() {
                 root.add_controller(dismiss.clone());
+
+                // Same as the file context menu: an autohide-off popover
+                // outlives window focus and floats over the window that
+                // gains it. Pop it down when the window deactivates.
+                if let Ok(win) = root.dynamic_cast::<gtk4::Window>() {
+                    let p = p.clone();
+                    win.connect_notify_local(Some("is-active"), move |w, _| {
+                        if !w.is_active() && p.is_visible() {
+                            p.popdown();
+                        }
+                    });
+                }
             } else {
                 dismiss_wired.set(false);
             }

@@ -36,6 +36,37 @@ pub(crate) struct SortState {
     pub sorter: gtk4::ColumnViewSorter,
 }
 
+/// Which renderer a file view shows: big icon grid, details list or
+/// the compact multi-column list. Stored as the GSettings "view-mode"
+/// value — the string IS the persisted key.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum ViewMode {
+    Icons,
+    List,
+    Compact,
+}
+
+impl ViewMode {
+    /// GSettings/action representation of the mode.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Icons => "icons",
+            Self::List => "list",
+            Self::Compact => "compact",
+        }
+    }
+
+    /// Parse a mode string; unknown values fall back to the icon
+    /// grid — a schema typo must never blank the file area.
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "list" => Self::List,
+            "compact" => Self::Compact,
+            _ => Self::Icons,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct FileView {
     pub widget: gtk4::Stack,
@@ -47,13 +78,16 @@ pub struct FileView {
     /// Fired when a view option changed (sort, hidden, view mode) so
     /// the menubar can resync its radio/checkbox states.
     options_notify: OptionsCallbacks,
-    /// Icon vs. list mode, remembered so a location change reapplies it.
-    pub(crate) icon_mode: Rc<Cell<bool>>,
+    /// Active renderer (icons/list/compact), remembered so a
+    /// location change reapplies it.
+    pub(crate) view_mode: Rc<Cell<ViewMode>>,
     /// Icon pixel size; changing it rebuilds the grid so cells rebind.
     pub(crate) icon_size: Rc<Cell<i32>>,
-    /// Selection models of both views; the visible one answers queries.
+    /// Selection models of all three views; the visible one answers
+    /// queries.
     pub(crate) sel_list: Rc<RefCell<Option<gtk4::MultiSelection>>>,
     pub(crate) sel_icons: Rc<RefCell<Option<gtk4::MultiSelection>>>,
+    pub(crate) sel_compact: Rc<RefCell<Option<gtk4::MultiSelection>>>,
     /// "Open in new tab" / "in new window" requests, resolved by the
     /// window owning this view (the view itself cannot reach it).
     pub(crate) open_in_tab: FileCallbacks,
@@ -75,6 +109,17 @@ pub struct FileView {
     /// scripts, checkouts) — the DirectoryList's own monitor dies
     /// with the old inode and would never fire again.
     dir_watch: Rc<RefCell<Option<gio::FileMonitor>>>,
+    /// Content monitor on the displayed directory itself — feeds
+    /// the debounced refresh. GtkDirectoryList's internal monitor
+    /// misses files renamed *into* the dir, so we watch ourselves.
+    dir_monitor: Rc<RefCell<Option<gio::FileMonitor>>>,
+    /// One scheduled refresh at a time — file-monitor events arrive
+    /// in bursts (batch copies, downloads).
+    refresh_pending: Rc<RefCell<Option<glib::SourceId>>>,
+    /// Trailing-edge timer for pure content churn (Changed/
+    /// AttributeChanged): re-armed on every event so a refresh only
+    /// runs once the write storm pauses — downloads do not flicker.
+    churn_pending: Rc<RefCell<Option<glib::SourceId>>>,
 }
 
 impl FileView {
@@ -96,24 +141,30 @@ impl FileView {
             item_count: Rc::new(RefCell::new(0)),
             count_notify: Rc::new(RefCell::new(Vec::new())),
             options_notify: Rc::new(RefCell::new(Vec::new())),
-            icon_mode: Rc::new(Cell::new(crate::settings::view_mode() == "icons")),
+            view_mode: Rc::new(Cell::new(ViewMode::from_str(&crate::settings::view_mode()))),
             icon_size: Rc::new(Cell::new(crate::settings::icon_size())),
             sel_list: Rc::new(RefCell::new(None)),
             sel_icons: Rc::new(RefCell::new(None)),
+            sel_compact: Rc::new(RefCell::new(None)),
             open_in_tab: Rc::new(RefCell::new(Vec::new())),
             open_in_window: Rc::new(RefCell::new(Vec::new())),
             ctx_popover: Rc::new(RefCell::new(None)),
             sort_state: Rc::new(RefCell::new(None)),
             sel_notify: Rc::new(RefCell::new(Vec::new())),
             dir_watch: Rc::new(RefCell::new(None)),
+            dir_monitor: Rc::new(RefCell::new(None)),
+            refresh_pending: Rc::new(RefCell::new(None)),
+            churn_pending: Rc::new(RefCell::new(None)),
         };
         this.set_location(location);
         // Break the watch→callback→view reference cycle on teardown:
         // the monitor's callback clones this FileView, so the pair
         // only dies together once the monitor is explicitly dropped.
         let dir_watch = this.dir_watch.clone();
+        let dir_monitor = this.dir_monitor.clone();
         this.widget.connect_destroy(move |_| {
             *dir_watch.borrow_mut() = None;
+            *dir_monitor.borrow_mut() = None;
         });
         // Files dropped anywhere on the view land in the displayed dir.
         crate::dnd::attach_view_drop(&this);
@@ -180,34 +231,35 @@ impl FileView {
     /// separate MultiSelection models, so the selection is mirrored
     /// across — users expect marked items to stay marked when they
     /// flip views (and the status bar then reflects the visible one).
-    pub fn set_icon_mode(&self, icons: bool) {
-        let changed = self.icon_mode.get() != icons;
-        if changed {
-            self.mirror_selection(!icons);
+    /// Switch the visible renderer; the selection is mirrored into
+    /// the target view's model so marked items stay marked.
+    pub fn set_view_mode(&self, mode: ViewMode) {
+        let old = self.view_mode.get();
+        if old != mode {
+            self.mirror_selection(old, mode);
         }
-        self.icon_mode.set(icons);
-        self.widget
-            .set_visible_child_name(if icons { "icons" } else { "list" });
-        if changed {
+        self.view_mode.set(mode);
+        // A floating hover caption would land on the wrong page.
+        if let Some(page) = self.widget.visible_child() {
+            crate::view_widgets::hide_caption_for(&page);
+        }
+        self.widget.set_visible_child_name(mode.as_str());
+        if old != mode {
             self.emit_options_notify();
         }
     }
 
-    /// Copy the selected positions from the currently visible view's
-    /// selection model into the other one (used on view-mode switch).
-    fn mirror_selection(&self, to_icons: bool) {
-        let (src, dst) = if to_icons {
-            (
-                self.sel_list.borrow().clone(),
-                self.sel_icons.borrow().clone(),
-            )
-        } else {
-            (
-                self.sel_icons.borrow().clone(),
-                self.sel_list.borrow().clone(),
-            )
+    /// Copy the selected positions between two views' selection
+    /// models (used on every view-mode switch).
+    fn mirror_selection(&self, from: ViewMode, to: ViewMode) {
+        let pick = |m: ViewMode| match m {
+            ViewMode::Icons => self.sel_icons.borrow().clone(),
+            ViewMode::List => self.sel_list.borrow().clone(),
+            ViewMode::Compact => self.sel_compact.borrow().clone(),
         };
-        let (Some(src), Some(dst), Some(model)) = (src, dst, self.model.borrow().clone()) else {
+        let (Some(src), Some(dst), Some(model)) =
+            (pick(from), pick(to), self.model.borrow().clone())
+        else {
             return;
         };
         dst.unselect_all();
@@ -218,9 +270,9 @@ impl FileView {
         }
     }
 
-    /// Whether the icon grid is currently shown.
-    pub fn is_icon_mode(&self) -> bool {
-        self.icon_mode.get()
+    /// Which renderer is currently shown.
+    pub fn view_mode(&self) -> ViewMode {
+        self.view_mode.get()
     }
 
     /// Current icon pixel size.
@@ -247,7 +299,7 @@ impl FileView {
             self.sel_icons.borrow().as_ref().expect("icons selection"),
         );
         self.widget.add_named(&page, Some("icons"));
-        if self.icon_mode.get() {
+        if self.view_mode.get() == ViewMode::Icons {
             self.widget.set_visible_child_name("icons");
         }
     }
@@ -400,6 +452,74 @@ impl FileView {
                 view.set_location(&loc);
             }
         });
+        // Content monitor: GtkDirectoryList's internal monitoring
+        // misses files renamed INTO the directory — which is how
+        // browsers download (temp file renamed into place), how mv
+        // works and how atomic saves land. Watch the directory
+        // ourselves: structural events refresh almost immediately
+        // (300 ms debounce), while pure content churn only refreshes
+        // after one second of quiet — a file being written shows up
+        // at once but the view stays calm until it is done.
+        *self.dir_monitor.borrow_mut() = location
+            .monitor_directory(gio::FileMonitorFlags::NONE, gio::Cancellable::NONE)
+            .ok()
+            .inspect(|monitor| {
+                let model_slot = self.model.clone();
+                let pending = self.refresh_pending.clone();
+                let churn = self.churn_pending.clone();
+                monitor.connect_changed(move |_, _, _, event| {
+                    match event {
+                        gio::FileMonitorEvent::Changed
+                        | gio::FileMonitorEvent::AttributeChanged => {
+                            // Content churn — a file is being written.
+                            // Re-arm the quiet timer so the refresh
+                            // runs once the write storm pauses instead
+                            // of re-rendering the whole view every
+                            // chunk. The row itself already exists.
+                            if let Some(old) = churn.borrow_mut().take() {
+                                old.remove();
+                            }
+                            let churn_c = churn.clone();
+                            let model_slot = model_slot.clone();
+                            let id = glib::timeout_add_local_once(
+                                std::time::Duration::from_secs(1),
+                                move || {
+                                    *churn_c.borrow_mut() = None;
+                                    if let Some(m) = model_slot.borrow().as_ref() {
+                                        m.refresh_contents();
+                                    }
+                                },
+                            );
+                            *churn.borrow_mut() = Some(id);
+                        }
+                        _ => {
+                            // Structural events (created/deleted/
+                            // renamed) and ChangesDoneHint — a file
+                            // closed after writing, i.e. "finished".
+                            // Near-immediate refresh; an armed churn
+                            // timer is superseded by it.
+                            if let Some(old) = churn.borrow_mut().take() {
+                                old.remove();
+                            }
+                            if pending.borrow().is_some() {
+                                return;
+                            }
+                            let pending_c = pending.clone();
+                            let model_slot = model_slot.clone();
+                            let id = glib::timeout_add_local_once(
+                                std::time::Duration::from_millis(300),
+                                move || {
+                                    *pending_c.borrow_mut() = None;
+                                    if let Some(m) = model_slot.borrow().as_ref() {
+                                        m.refresh_contents();
+                                    }
+                                },
+                            );
+                            *pending.borrow_mut() = Some(id);
+                        }
+                    }
+                });
+            });
         self.apply_model(ViewModel::new(location));
     }
 
@@ -442,9 +562,13 @@ impl FileView {
             if let Some(sel) = self.sel_icons.borrow().as_ref() {
                 sel.set_model(Some(&model.list));
             }
+            if let Some(sel) = self.sel_compact.borrow().as_ref() {
+                sel.set_model(Some(&model.list));
+            }
         } else {
             let column_view = crate::view_widgets::build_column_view(self, &model.list);
             let grid_view = crate::view_grid::build_grid_view(self, &model.list);
+            let compact_view = crate::view_compact::build_compact_view(self, &model.list);
             let list_page = wrap_view_page(
                 &column_view,
                 self.sel_list.borrow().as_ref().expect("list selection"),
@@ -453,8 +577,16 @@ impl FileView {
                 &grid_view,
                 self.sel_icons.borrow().as_ref().expect("icons selection"),
             );
+            let compact_page = wrap_view_page(
+                &compact_view,
+                self.sel_compact
+                    .borrow()
+                    .as_ref()
+                    .expect("compact selection"),
+            );
             self.widget.add_named(&list_page, Some("list"));
             self.widget.add_named(&icons_page, Some("icons"));
+            self.widget.add_named(&compact_page, Some("compact"));
         }
         // Every fresh model gets the view sorter chain — the
         // ColumnViewSorter survives navigation, so the chosen column
@@ -463,7 +595,7 @@ impl FileView {
             model.attach_view_sorter(&s.sorter.clone().upcast());
         }
         *self.model.borrow_mut() = Some(model);
-        self.set_icon_mode(self.icon_mode.get());
+        self.set_view_mode(self.view_mode.get());
     }
 
     /// Register a listener fired whenever the visible row count changes
@@ -500,7 +632,21 @@ fn wrap_view_page(
     // reflows instead of its parent being pinned by a wide page.
     scrolled.set_min_content_width(60);
     let overlay = gtk4::Overlay::builder().child(&scrolled).build();
+    // Shared hover caption — shown above the rows when a truncated
+    // filename expands (Nemo-style, see view_widgets).
+    overlay.add_overlay(&crate::view_widgets::hover_caption());
     crate::rubberband::attach(&overlay, child.upcast_ref(), &scrolled, sel);
+    // Scrolling stales the floating caption's position — hide it.
+    {
+        let page = overlay.clone().upcast::<gtk4::Widget>();
+        scrolled.vadjustment().connect_value_changed(move |_| {
+            crate::view_widgets::hide_caption_for(&page);
+        });
+        let page = overlay.clone().upcast::<gtk4::Widget>();
+        scrolled.hadjustment().connect_value_changed(move |_| {
+            crate::view_widgets::hide_caption_for(&page);
+        });
+    }
     overlay.upcast()
 }
 

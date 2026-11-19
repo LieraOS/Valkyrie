@@ -44,6 +44,8 @@ mod thumbnails;
 mod trash_actions;
 mod tree_ops;
 mod undo;
+mod verify_lane;
+mod view_compact;
 mod view_grid;
 mod view_model;
 mod view_widgets;

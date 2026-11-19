@@ -92,6 +92,7 @@ fn view_menu() -> gio::Menu {
     let s = gio::Menu::new();
     s.append(Some(&tr("Icon View")), Some("win.view-mode::icons"));
     s.append(Some(&tr("List View")), Some("win.view-mode::list"));
+    s.append(Some(&tr("Compact View")), Some("win.view-mode::compact"));
     menu.append_section(None, &s);
 
     let arrange = gio::Menu::new();

@@ -7,31 +7,34 @@
 - [ ] Echte Nextcloud/ownCloud-Verifikation mit TLS (davs://) —
       lokaler WsgiDAV bewies Plain-DAV-Sync in beide Richtungen, TLS +
       Nextcloud-ETag-/Chunk-Semantik steht am echten Server noch aus
-- [ ] Terminal-Panel cd-Injection: Das Panel folgt der Navigation,
-      indem es `cd` in die Eingabe der laufenden Shell füttert. Hat
-      der Nutzer einen halb getippten Befehl am Prompt, landet das
-      injizierte `cd ` mitten in seiner Zeile (oder führt seine
-      Teileingabe aus). Braucht Prompt-State-Awareness — z.B. nur
-      injizieren, wenn der Tastaturpuffer leer ist, oder VTEs
-      feed_child erst nach Bestätigung eines sauberen Prompts nutzen
-- [ ] Verzeichnisansicht übernimmt extern angelegte Dateien nicht —
-      live beobachtet: Ein Screenshot-Tool schrieb ein neues .png in
-      den angezeigten Ordner und die Ansicht blieb bis zu manuellem
-      F5 veraltet. dir_watch deckt nur Löschen+Neuanlegen des Ordners
-      selbst ab; normale Datei-Neuzugänge sollten über
-      GtkDirectoryLists eigenen Monitor ankommen. Reproduzieren und
-      diagnostizieren: Monitor nie aktiviert, Events verworfen oder
-      Modell nicht aktualisiert
-- [ ] Kontextmenü überlebt Fenster-Fokuswechsel: Rechtsklick-Popover
-      in Fenster A öffnen, dann Fenster B aktivieren/verschieben —
-      das Menü in A müsste bei Fokusverlust schließen, bleibt aber
-      offen, schwebt sogar über B. Ursache: autohide ist für die
-      handgebauten Popovers deaktiviert und das manuelle Schließen
-      überwacht nur Klicks innerhalb des eigenen Fensters. Fix-
-      Richtung: Popdown bei is-active-/Fokus-Verlust des Fensters
-      oder GTK-autohide-Verhalten fensterübergreifend neu prüfen
-
 ## Erledigt
+
+- [x] Terminal-Panel cd-Injection: Das Panel folgte der Navigation,
+      indem es `cd` in die Eingabe der laufenden Shell fütterte —
+      bei halb getipptem Befehl am Prompt landete das injizierte
+      `cd ` mitten in der Zeile oder führte die Teileingabe aus.
+      Behoben über Prompt-State-Awareness: VTE-`commit`-Bytes merken
+      sich, ob die Editiereile „schmutzig" ist (Enter/Strg+C/Strg+U
+      räumen sie); eine Navigation bei schmutziger Zeile (oder
+      solange ein Vordergrund-Child wie vim die PTY hält, geprüft
+      via tcgetpgrp gegen die Shell-PID) reiht das Ziel in eine
+      Warteschlange, und das gequeue `cd` wird beim nächsten
+      zeilenleerenden Commit geflusht, sobald die Shell wieder den
+      Vordergrund hält
+- [x] Kontextmenü überlebt Fenster-Fokuswechsel: Rechtsklick-Popovers
+      (Dateiansicht und Sidebar-Geräte) hatten autohide aus und
+      überwachten nur Klicks aufs eigene Fenster — ein Menü in
+      Fenster A schwebte über aktiviertem Fenster B. Beide poppen
+      jetzt bei is-active-Verlust des eigenen Fensters zu
+
+- [x] Verzeichnisansicht übernimmt extern angelegte Dateien: per Test
+      reproduziert — GtkDirectoryLists interner Monitor verwirft
+      ins-Verzeichnis-verschobene Dateien komplett (Browser
+      Temp→Rename-Downloads, mv, atomare Saves; einfache Creates kamen
+      noch an). Behoben über einen eigenen debounced GFileMonitor auf
+      dem angezeigten Ordner, der eine frische DirectoryList unter
+      das bestehende MapListModel tauscht — Filter/Sortierung/
+      Selektionen/Widgets unangetastet
 
 - [x] Editierbarer Eigenschaften-Dialog: Namensfeld auf der Seite
       „Grundlegend" benennt via set_display_name um (Header folgt,

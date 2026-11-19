@@ -210,7 +210,7 @@ pub(crate) fn install(this: &Rc<ValkyrieWindow>) {
             action.set_state(&mode.to_variant());
             if let Some(this) = weak.upgrade() {
                 if let Some(tab) = this.active_tab() {
-                    tab.set_icon_mode(mode == "icons");
+                    tab.set_view_mode(crate::file_view::ViewMode::from_str(mode));
                 }
             }
         });
@@ -340,6 +340,7 @@ pub(crate) fn install(this: &Rc<ValkyrieWindow>) {
         app.set_accels_for_action("win.split-view", &["F3"]);
         app.set_accels_for_action("win.view-mode::icons", &["<Ctrl>1"]);
         app.set_accels_for_action("win.view-mode::list", &["<Ctrl>2"]);
+        app.set_accels_for_action("win.view-mode::compact", &["<Ctrl>3"]);
         app.set_accels_for_action("win.quit", &["<Ctrl>q"]);
     }
 }

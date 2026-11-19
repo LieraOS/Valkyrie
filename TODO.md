@@ -7,30 +7,31 @@
 - [ ] Real Nextcloud/ownCloud verification with TLS (davs://) —
       local WsgiDAV proved plain-dav sync both ways, TLS + Nextcloud
       ETag/chunk semantics still pending on the real server
-- [ ] Terminal panel cd-injection: the panel follows navigation by
-      feeding `cd` into the running shell's input. If the user has a
-      half-typed command at the prompt, the injected `cd ` lands in
-      the middle of their line (or executes their partial input).
-      Needs prompt-state awareness — e.g. only inject when the
-      previous keystroke buffer is empty, or use VTE's
-      feed_child only after confirming a clean prompt
-- [ ] Directory view does not pick up externally created files —
-      observed live: a screenshot tool wrote a new .png into the
-      displayed folder and the view stayed stale until manual F5.
-      dir_watch only covers delete+recreate of the folder itself;
-      ordinary file-added should arrive through GtkDirectoryList's
-      own monitor. Reproduce and diagnose: monitor never armed,
-      events dropped, or model not updated
-- [ ] Context menu survives window focus change: open a right-click
-      popover in window A, then activate/drag window B — the menu in
-      A should dismiss on focus loss but stays open, even floating
-      above B. Cause: autohide is disabled for the hand-built
-      popovers and the manual dismissal only watches presses inside
-      the owning window. Fix direction: popdown on the window's
-      is-active/focus loss, or re-check GTK autohide behaviour
-      across windows of the same app
-
 ## Done
+
+- [x] Terminal panel cd-injection: the panel followed navigation by
+      feeding `cd` into the running shell's input — with a half-typed
+      command at the prompt the injected `cd ` landed mid-line or
+      executed the partial input. Fixed with prompt-state awareness:
+      VTE `commit` bytes track whether the edit line is dirty
+      (Enter/Ctrl+C/Ctrl+U clear it); a navigation while dirty (or
+      while a foreground child like vim owns the pty, checked via
+      tcgetpgrp vs the shell pid) queues the target, and the queued
+      `cd` is flushed on the next line-clearing commit once the shell
+      holds the foreground again
+- [x] Context menu survives window focus change: right-click popovers
+      (file view and sidebar devices) had autohide off and only
+      watched presses on their own window — a menu in window A
+      floated over activated window B. Both now pop down on the
+      owning window's is-active loss
+
+- [x] Directory view picks up externally created files: reproduced
+      with tests — GtkDirectoryList's internal monitor drops
+      moved-into-dir events entirely (browser temp→rename downloads,
+      mv, atomic saves; plain creates still arrived). Fixed by
+      watching the directory ourselves with a debounced GFileMonitor
+      and swapping a fresh DirectoryList under the existing
+      MapListModel — filter/sort/selections/widgets untouched
 
 - [x] Editable Properties dialog: Name entry on the
       Basic page renames via set_display_name (header follows, error

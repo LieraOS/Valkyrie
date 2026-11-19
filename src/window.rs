@@ -349,7 +349,7 @@ impl ValkyrieWindow {
         let Some(tab) = self.active_tab() else { return };
         let m = &*self.menu_actions;
         m.view_mode
-            .set_state(&if tab.is_icon_mode() { "icons" } else { "list" }.to_variant());
+            .set_state(&tab.view_mode().as_str().to_variant());
         m.arrange.set_state(&tab.sort_field().as_str().to_variant());
         m.arrange_desc
             .set_state(&tab.sort_descending().to_variant());

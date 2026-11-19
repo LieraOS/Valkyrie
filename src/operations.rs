@@ -181,15 +181,14 @@ pub fn trash(file: &gio::File, parent: &impl IsA<gtk4::Widget>) {
 pub fn delete_permanently(parent: &gtk4::Widget, files: &[gio::File]) {
     let files = files.to_vec();
     let n = files.len();
-    let body = if n == 1 {
-        tr("This item will be deleted permanently. This cannot be undone.")
-    } else {
-        trn(
-            "This item will be deleted permanently. This cannot be undone.",
-            "These items will be deleted permanently. This cannot be undone.",
-            n as u32,
-        )
-    };
+    // trn covers n == 1 via the singular form — calling tr() on the
+    // same msgid here would collide with the plural entry in the
+    // catalogue (same msgid, plural and non-plural).
+    let body = trn(
+        "This item will be deleted permanently. This cannot be undone.",
+        "These items will be deleted permanently. This cannot be undone.",
+        n as u32,
+    );
     crate::trash_actions::confirm(parent, &tr("Delete permanently?"), &body, move |parent| {
         let wipe = if crate::settings::secure_delete() {
             crate::settings::secure_delete_passes() as u32

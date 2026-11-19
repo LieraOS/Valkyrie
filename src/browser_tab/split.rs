@@ -163,7 +163,7 @@ impl BrowserTab {
         });
 
         // Mirror the shared view options into the new pane.
-        pane.file_view.set_icon_mode(self.file_view.is_icon_mode());
+        pane.file_view.set_view_mode(self.file_view.view_mode());
         pane.file_view.set_icon_size(self.file_view.icon_size());
         pane.file_view.set_sort(
             self.file_view.sort_field(),

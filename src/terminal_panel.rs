@@ -11,13 +11,24 @@
 // it, it does not replace it.
 
 use std::cell::{Cell, RefCell};
+use std::os::fd::AsRawFd;
 use std::path::PathBuf;
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
+use std::time::Duration;
 
 use gtk4::prelude::*;
 use vte4::prelude::*;
 
 use crate::i18n::tr;
+
+/// True when the committed bytes end or wipe the shell's edit line —
+/// Enter (\r/\n), Ctrl+C (SIGINT → fresh prompt) or Ctrl+U (kill whole
+/// line). Everything else may leave the buffer holding typed text.
+fn commit_clears_line(bytes: &[u8]) -> bool {
+    bytes
+        .iter()
+        .any(|b| matches!(*b, b'\r' | b'\n' | 0x03 | 0x15))
+}
 
 /// Quote `s` for POSIX shells: wrap in single quotes, escaping embedded
 /// quotes as '\''. Needed because the panel feeds literal command lines
@@ -42,6 +53,19 @@ pub(crate) struct TerminalPanel {
     /// Directory actually reached, so repeated navigations to the same
     /// folder do not stack `cd` lines.
     synced: Rc<RefCell<Option<PathBuf>>>,
+    /// True while the shell's edit line may hold typed text — feeding
+    /// `cd` then would land mid-line. Tracked from VTE `commit` data.
+    line_dirty: Rc<Cell<bool>>,
+    /// Queued `cd` target: set when navigation happens while the line
+    /// is dirty or a foreground child (vim, htop) owns the pty. Latest
+    /// navigation wins; flushed when the prompt is clean again.
+    pending_dir: Rc<RefCell<Option<PathBuf>>>,
+    /// Shell process id — the shell is the session leader, so its pid
+    /// equals the pty's foreground process group when no child (vim,
+    /// htop, a running pipeline) is in front.
+    shell_pid: Rc<Cell<i32>>,
+    /// Back-reference so commit callbacks can schedule delayed work.
+    weak_self: RefCell<Weak<Self>>,
 }
 
 impl TerminalPanel {
@@ -82,13 +106,42 @@ impl TerminalPanel {
             spawning: Rc::new(Cell::new(false)),
             dir: Rc::new(RefCell::new(None)),
             synced: Rc::new(RefCell::new(None)),
+            line_dirty: Rc::new(Cell::new(false)),
+            pending_dir: Rc::new(RefCell::new(None)),
+            shell_pid: Rc::new(Cell::new(0)),
+            weak_self: RefCell::new(Weak::new()),
         });
+        *this.weak_self.borrow_mut() = Rc::downgrade(&this);
 
         let weak = Rc::downgrade(&this);
         this.term.connect_child_exited(move |_, _| {
             if let Some(this) = weak.upgrade() {
                 this.alive.set(false);
                 this.spawning.set(false);
+                this.shell_pid.set(0);
+                this.line_dirty.set(false);
+                // A queued cd dies with the shell — the respawn starts
+                // in `dir` directly.
+                this.pending_dir.borrow_mut().take();
+            }
+        });
+
+        // VTE emits `commit` for every chunk written to the pty — key
+        // presses, pastes and our own feeds alike. Use it to keep
+        // `line_dirty` current: any bytes that do not clear the line
+        // might be edit-buffer content.
+        let weak = Rc::downgrade(&this);
+        this.term.connect_commit(move |_, text, _| {
+            let Some(this) = weak.upgrade() else { return };
+            let bytes = text.as_bytes();
+            if commit_clears_line(bytes) {
+                this.line_dirty.set(false);
+                // The line just ended — usually Enter. Give the shell a
+                // moment to fork its command, then flush a queued `cd`
+                // only if the shell still owns the pty foreground.
+                this.schedule_flush();
+            } else if !bytes.is_empty() {
+                this.line_dirty.set(true);
             }
         });
 
@@ -121,7 +174,9 @@ impl TerminalPanel {
 
     /// Feed `cd` into the shell when the tracked local path changed.
     /// Skipped while the shell is dead or not running yet (the spawn's
-    /// working directory already lands on the right place).
+    /// working directory already lands on the right place). When the
+    /// edit line may hold typed text or a foreground child owns the
+    /// pty, the target is queued instead of corrupting user input.
     fn sync_location(&self) {
         if !self.widget.is_visible() || !self.alive.get() {
             return;
@@ -131,9 +186,62 @@ impl TerminalPanel {
         if self.synced.borrow().as_ref() == Some(&path) {
             return;
         }
+        if self.line_dirty.get() || !self.shell_is_foreground() {
+            *self.pending_dir.borrow_mut() = Some(path);
+            return;
+        }
+        self.feed_cd(path);
+    }
+
+    /// Write the `cd` line and remember the reached directory.
+    fn feed_cd(&self, path: PathBuf) {
         *self.synced.borrow_mut() = Some(path.clone());
         let cmd = format!("cd {}\n", shell_quote(&path.to_string_lossy()));
         self.term.feed_child(cmd.as_bytes());
+    }
+
+    /// True while the shell itself holds the pty's foreground process
+    /// group — no vim/htop/pipeline running in front. tcgetpgrp on a
+    /// dead pty fails and reports not-foreground, which is the safe
+    /// side to err on.
+    fn shell_is_foreground(&self) -> bool {
+        let pid = self.shell_pid.get();
+        let Some(pty) = self.term.pty() else {
+            return false;
+        };
+        pid > 0 && unsafe { libc::tcgetpgrp(pty.fd().as_raw_fd()) } == pid
+    }
+
+    /// Re-check the queued `cd` after a short delay — long enough for
+    /// the shell to have forked whatever the user launched, so the
+    /// foreground check reflects the new owner.
+    fn schedule_flush(&self) {
+        if self.pending_dir.borrow().is_none() {
+            return;
+        }
+        let weak = self.weak_self.borrow().clone();
+        glib::timeout_add_local_once(Duration::from_millis(120), move || {
+            if let Some(this) = weak.upgrade() {
+                this.flush_pending();
+            }
+        });
+    }
+
+    /// Feed the queued `cd` if the prompt is clean and the shell still
+    /// owns the foreground. A failed check keeps the entry queued —
+    /// the next line-clearing commit retries.
+    fn flush_pending(&self) {
+        let path = self.pending_dir.borrow().clone();
+        let Some(path) = path else { return };
+        if !self.widget.is_visible()
+            || !self.alive.get()
+            || self.line_dirty.get()
+            || !self.shell_is_foreground()
+        {
+            return;
+        }
+        self.pending_dir.borrow_mut().take();
+        self.feed_cd(path);
     }
 
     /// Spawn the user's $SHELL (falling back to /bin/sh) in the tracked
@@ -160,6 +268,7 @@ impl TerminalPanel {
         let alive = self.alive.clone();
         let spawning = self.spawning.clone();
         let synced = self.synced.clone();
+        let shell_pid = self.shell_pid.clone();
         let target = cwd.clone();
         self.term.spawn_async(
             vte4::PtyFlags::DEFAULT,
@@ -173,8 +282,9 @@ impl TerminalPanel {
             move |result| {
                 spawning.set(false);
                 match result {
-                    Ok(_) => {
+                    Ok(pid) => {
                         alive.set(true);
+                        shell_pid.set(pid.0);
                         // The spawn already lands in `dir` — remember it so
                         // the first sync does not feed a redundant `cd`.
                         *synced.borrow_mut() = target;

@@ -4,7 +4,7 @@
     <key name="view-mode" type="s">
       <default>'icons'</default>
       <summary>Default file view mode</summary>
-      <description>"list" for the details view, "icons" for the icon grid.</description>
+      <description>"list" for the details view, "icons" for the icon grid, "compact" for the small-icon multi-column list.</description>
     </key>
     <key name="show-hidden" type="b">
       <default>false</default>

@@ -137,6 +137,17 @@ pub fn copy_move(parent: &gtk4::Widget, sources: Vec<gio::File>, dest: gio::File
                 .unwrap_or(false)
         };
 
+        // Background verify lane: copied files are queued for the
+        // destination re-hash instead of stalling the copy loop.
+        // Exists whenever the dialog has a verify checkbox — the
+        // toggle can be flipped mid-copy, so the lane must be ready.
+        let verify_lane = verify_flag.as_ref().map(|_| {
+            Arc::new(crate::verify_lane::VerifyLane::new(
+                vreport_arc.clone(),
+                cancel.clone(),
+            ))
+        });
+
         // Parallel workers only ever make sense for copies — moves on
         // the same filesystem are renames, and cross-device moves are
         // already copy+delete bound by the target medium.
@@ -164,6 +175,7 @@ pub fn copy_move(parent: &gtk4::Widget, sources: Vec<gio::File>, dest: gio::File
                 let ctl = VerifyCtl {
                     enabled: &verify_enabled,
                     report: verify_report,
+                    lane: verify_lane.as_deref(),
                 };
                 let mut opts = CopyOptions {
                     verify: verify_flag.is_some().then_some(ctl),
@@ -201,6 +213,7 @@ pub fn copy_move(parent: &gtk4::Widget, sources: Vec<gio::File>, dest: gio::File
                 verify_flag: verify_flag.clone(),
                 report: report_arc,
                 verify_report: verify_flag.as_ref().map(|_| vreport_arc),
+                verify_lane: verify_lane.clone(),
                 paced,
             };
             let (_, pool_err) = copy_pool::run(workers, cfg, |pool| {
@@ -242,6 +255,12 @@ pub fn copy_move(parent: &gtk4::Widget, sources: Vec<gio::File>, dest: gio::File
         if !cancel.is_cancelled() {
             if let Some(dp) = dest.path() {
                 copy_pool::flush_fs(&dp);
+            }
+            // Pending verifications finish while their results stream
+            // to the dialog — closing at 100 % means everything,
+            // including the last re-hash, is really done.
+            if let Some(lane) = &verify_lane {
+                lane.wait();
             }
         }
         let _ = tx.send(Msg::Done);

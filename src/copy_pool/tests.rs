@@ -32,6 +32,7 @@ fn cfg(
             verify_report: Some(Arc::new(move |n, r| {
                 let _ = tx.send((n.to_string(), r));
             })),
+            verify_lane: None,
             paced: false,
         },
         rx,
@@ -153,6 +154,7 @@ fn pool_jobs_run_concurrently() {
             let _ = tx.send(name.to_string());
         }),
         verify_report: None,
+        verify_lane: None,
         paced: false,
     };
     let (src, dst) = (src_dir.clone(), dst_dir.clone());

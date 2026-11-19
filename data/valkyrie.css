@@ -95,3 +95,14 @@ window.elevated menubar {
   background-color: #a51d2d;
   color: #ffffff;
 }
+
+/* Floating filename expansion (hover over an ellipsized caption):
+   painted inside the page overlay above the neighbouring rows, so it
+   needs the theme's base color as backdrop — otherwise the expanded
+   text bleeds into the rows it covers. */
+.valkyrie-hover-caption {
+  background-color: @theme_base_color;
+  color: @theme_text_color;
+  padding: 1px 4px;
+  border-radius: 4px;
+}

@@ -15,10 +15,10 @@ use super::FileView;
 impl FileView {
     /// The MultiSelection model of the currently visible view.
     fn active_selection(&self) -> Option<gtk4::MultiSelection> {
-        if self.icon_mode.get() {
-            self.sel_icons.borrow().clone()
-        } else {
-            self.sel_list.borrow().clone()
+        match self.view_mode.get() {
+            super::ViewMode::Icons => self.sel_icons.borrow().clone(),
+            super::ViewMode::List => self.sel_list.borrow().clone(),
+            super::ViewMode::Compact => self.sel_compact.borrow().clone(),
         }
     }
 

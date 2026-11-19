@@ -19,6 +19,13 @@ use crate::view_model::SortField;
 /// that a click happened on a row (whose own gesture handles it).
 pub(crate) const ROW_MARKER: &str = "valkyrie-file-row";
 
+/// Marker set on the filename label inside every row — the hover
+/// expander finds the ellipsized widget through it.
+pub(crate) const CAPTION_MARKER: &str = "valkyrie-name-caption";
+/// Marker for the shared caption label that lives in each page's
+/// overlay (created by file_view::wrap_view_page).
+const HOVER_CAPTION: &str = "valkyrie-hover-caption";
+
 /// Details list with the classic columns. Every column carries its
 /// own sorter so the headers are clickable; the ColumnViewSorter then
 /// drives the SortListModel (under a directories-first sorter).
@@ -42,12 +49,12 @@ pub fn build_column_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4::
                 240,
                 |box_| {
                     box_.append(&gtk4::Image::new());
-                    box_.append(
-                        &gtk4::Label::builder()
-                            .xalign(0.0)
-                            .ellipsize(gtk4::pango::EllipsizeMode::End)
-                            .build(),
-                    );
+                    let label = gtk4::Label::builder()
+                        .xalign(0.0)
+                        .ellipsize(gtk4::pango::EllipsizeMode::End)
+                        .build();
+                    label.set_widget_name(CAPTION_MARKER);
+                    box_.append(&label);
                 },
                 |box_, obj| {
                     if let Some(image) = box_.first_child().and_downcast::<gtk4::Image>() {
@@ -178,6 +185,9 @@ fn column(
         };
         // See view_grid.rs — position needed by the rubber-band.
         unsafe { box_.set_data("valkyrie-pos", item.position()) };
+        // A recycled row under a static pointer would show a stale
+        // expanded caption — drop it; motion re-shows if needed.
+        crate::view_widgets::hide_caption_for(box_.upcast_ref());
         bind(&box_, &obj);
         // The row's leading widget is the icon — the dim effect
         // lives on it, text stays readable.
@@ -190,7 +200,11 @@ fn column(
         .title(title)
         .factory(&factory)
         .sorter(&crate::view_model::field_sorter(field))
+        // fixed_width is the *initial* width — resizable puts a drag
+        // handle on the header separator so the user can widen or
+        // shrink every column afterwards.
         .fixed_width(width)
+        .resizable(true)
         .build()
 }
 
@@ -345,6 +359,131 @@ pub(crate) fn attach_row_controllers(row: &gtk4::Box, item: &gtk4::ListItem, vie
     // at event time as well.
     crate::dnd::attach_row_drop(row, item, view);
     crate::dnd::attach_row_source(row, item, view);
+
+    // Hover expander: a truncated caption grows downward over the
+    // neighbours (Nemo-style). The text is painted by a shared label
+    // inside the page overlay — the row itself keeps its size, so the
+    // grid never reflows on hover.
+    {
+        let target = row.clone().upcast::<gtk4::Widget>();
+        let motion = gtk4::EventControllerMotion::new();
+        {
+            let target = target.clone();
+            motion.connect_enter(move |_, _, _| show_hover_caption(&target));
+        }
+        {
+            let target = target.clone();
+            // motion re-shows after a scroll/rebind hid the caption
+            // while the pointer stayed inside the row.
+            motion.connect_motion(move |_, _, _| show_hover_caption(&target));
+        }
+        motion.connect_leave(move |_| hide_caption_for(&target));
+        row.add_controller(motion);
+    }
+}
+
+/// The shared hover caption one page overlay hosts. It must not be a
+/// pointer target — events have to pass through to the rows below.
+pub(crate) fn hover_caption() -> gtk4::Label {
+    let label = gtk4::Label::builder()
+        .halign(gtk4::Align::Start)
+        .valign(gtk4::Align::Start)
+        .wrap(true)
+        .wrap_mode(gtk4::pango::WrapMode::WordChar)
+        .visible(false)
+        .can_target(false)
+        .css_classes(["valkyrie-hover-caption"])
+        .build();
+    label.set_widget_name(HOVER_CAPTION);
+    label
+}
+
+/// Locate the shared caption inside `scope` — accepts the page
+/// overlay itself or any widget inside it.
+fn caption_in(scope: &gtk4::Widget) -> Option<gtk4::Label> {
+    let root = if scope.is::<gtk4::Overlay>() {
+        Some(scope.clone())
+    } else {
+        scope.ancestor(gtk4::Overlay::static_type())
+    }?;
+    find_by_name(&root, HOVER_CAPTION, 2).and_downcast()
+}
+
+/// Hide the page's hover caption. Called on pointer leave, scroll,
+/// view-mode switch and row rebind — anything that can stale the
+/// floating text's position or content.
+pub(crate) fn hide_caption_for(w: &gtk4::Widget) {
+    if let Some(c) = caption_in(w) {
+        c.set_visible(false);
+    }
+}
+
+/// Expand an ellipsized row caption over the space below it. Copies
+/// text, width and alignment from the real label onto the shared
+/// overlay caption, so the first line sits exactly where the
+/// truncated one is and only the continuation lines float.
+fn show_hover_caption(row: &gtk4::Widget) {
+    let Some(label) = find_by_name(row, CAPTION_MARKER, 4).and_downcast::<gtk4::Label>() else {
+        return;
+    };
+    // Only expand when the name is actually truncated — short names
+    // already read in full and need no overlay.
+    if !label.layout().is_ellipsized() {
+        hide_caption_for(row);
+        return;
+    }
+    let Some(caption) = caption_in(row) else {
+        return;
+    };
+    let Some(overlay) = caption
+        .ancestor(gtk4::Overlay::static_type())
+        .or_else(|| caption.parent().map(|p| p.upcast::<gtk4::Widget>()))
+    else {
+        return;
+    };
+    let Some(p) = label.compute_point(&overlay, &gtk4::graphene::Point::new(0.0, 0.0)) else {
+        return;
+    };
+    caption.set_text(&label.label());
+    caption.set_wrap_mode(label.wrap_mode());
+    caption.set_justify(label.justify());
+    caption.set_xalign(label.xalign());
+    // Force the wrap width to the truncated label's allocation:
+    // width_request is only a minimum (the label could still take its
+    // unwrapped natural width and grow sideways), while
+    // max_width_chars caps the natural size and makes pango wrap.
+    // char width comes from the font metrics — px to chars is an
+    // approximation, the line raggedness hardly matters.
+    let width = (overlay.width() as f32 - p.x()).min(label.width() as f32);
+    let metrics = caption
+        .create_pango_context()
+        .metrics(None::<&gtk4::pango::FontDescription>, None);
+    let char_px = metrics.approximate_char_width() / gtk4::pango::SCALE;
+    if char_px > 0 {
+        caption.set_max_width_chars((width / char_px as f32).max(4.0) as i32);
+    }
+    caption.set_margin_start(p.x() as i32);
+    caption.set_margin_top(p.y() as i32);
+    caption.set_visible(true);
+}
+
+/// Depth-first child search by widget name — the recycling factories
+/// tag their caption labels and row boxes instead of exporting them.
+fn find_by_name(w: &gtk4::Widget, name: &str, depth: u8) -> Option<gtk4::Widget> {
+    if w.widget_name() == name {
+        return Some(w.clone());
+    }
+    if depth == 0 {
+        return None;
+    }
+    let mut child = w.first_child();
+    while let Some(ch) = child {
+        if let Some(found) = find_by_name(&ch, name, depth - 1) {
+            return Some(found);
+        }
+        child = ch.next_sibling();
+    }
+    None
 }
 
 /// True when the widget under (x, y) is inside a file row — detected

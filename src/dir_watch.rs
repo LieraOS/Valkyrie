@@ -47,7 +47,7 @@ pub fn watch_recreation(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::cell::Cell;
+    use std::cell::{Cell, RefCell};
     use std::rc::Rc;
     use std::time::{Duration, Instant};
 
@@ -63,8 +63,6 @@ mod tests {
         let fired = Rc::new(Cell::new(false));
         let flag = fired.clone();
         let target = gio::File::for_path(&dir);
-        let monitor = watch_recreation(&target, move || flag.set(true));
-        assert!(monitor.is_some(), "parent monitor must be created");
 
         // Delete+recreate from another thread while the main context
         // pumps the file monitor events below.
@@ -75,12 +73,20 @@ mod tests {
             std::fs::create_dir_all(&dir_thread).expect("recreate watched dir");
         });
 
-        let ctx = glib::MainContext::default();
-        let deadline = Instant::now() + Duration::from_secs(5);
-        while !fired.get() && Instant::now() < deadline {
-            ctx.iteration(false);
-            std::thread::sleep(Duration::from_millis(10));
-        }
+        // Own thread-default context — the shared default steals
+        // wakeups between tests running in parallel threads. The
+        // monitor is created inside so its sources attach here.
+        let ctx = glib::MainContext::new();
+        let monitor = Rc::new(RefCell::new(None));
+        let _ = ctx.with_thread_default(|| {
+            *monitor.borrow_mut() = watch_recreation(&target, move || flag.set(true));
+            assert!(monitor.borrow().is_some(), "parent monitor must be created");
+            let deadline = Instant::now() + Duration::from_secs(5);
+            while !fired.get() && Instant::now() < deadline {
+                ctx.iteration(false);
+                std::thread::sleep(Duration::from_millis(10));
+            }
+        });
 
         drop(monitor);
         std::fs::remove_dir_all(&base).ok();

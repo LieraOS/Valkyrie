@@ -8,10 +8,10 @@ terminal, an integrity-verified parallel copy engine, and two-way
 WebDAV folder sync — all without a webview or a framework underneath,
 just GTK4, GIO and Rust.
 
-> **Status:** stable and in daily use. Two areas are still pending
+> **Status:** stable and in daily use. One area is still pending
 > real-world verification — see `TODO.md`: WebDAV sync against a real
 > Nextcloud/ownCloud server (verified only against a local test server
-> so far) and a terminal-panel input edge case.
+> so far).
 
 ## Screenshots
 
@@ -26,8 +26,12 @@ just GTK4, GIO and Rust.
 - Tabs (Ctrl+T / Ctrl+W), close button and middle-click close,
   detachable between windows — dragging a tab outside every window
   opens a new one; the tab bar auto-hides with a single tab
-- Icon grid and details list (Name/Size/Type/Modified, clickable
-  column headers); natural filename sort (file_2 < file_10)
+- Three view modes — icon grid, details list and compact list —
+  switched via the linked toolbar buttons, the View menu or
+  Ctrl+1/2/3; the details list has resizable column headers
+  (Name/Size/Type/Modified); hovering a truncated filename expands it
+  downward in-place without shifting the layout; natural filename
+  sort (file_2 < file_10)
 - Split view (F3): two independent panes per tab, each with its own
   history and breadcrumb; "Copy/Move to Other Pane" in row menus
 - Breadcrumb pathbar, Ctrl+L location entry, back/forward/up,
@@ -38,9 +42,12 @@ just GTK4, GIO and Rust.
   symlinked directories
 - Zoom slider in the status bar; icon size remembered per directory
   in GVFS metadata
-- Directory monitoring survives delete-and-recreate cycles (parent-
-  directory watch — the inotify/inode-bound monitor would go silent
-  otherwise)
+- Live directory view: new files appear instantly (own debounced
+  GFileMonitor — GtkDirectoryList's internal monitor drops
+  moved-into-dir events like browser download renames), while
+  content-write churn from growing downloads only refreshes after a
+  quiet period or on close; delete-and-recreate cycles survive via a
+  parent-directory watch
 
 ### File operations
 
@@ -51,7 +58,9 @@ just GTK4, GIO and Rust.
   fall back to a streamed pipeline; metadata re-applied via
   copy_attributes on both paths
 - Optional integrity verification: BLAKE3 hash of the source inline
-  while copying, destination re-hashed — mismatches collected into
+  while copying; destinations are re-hashed on a background verify
+  lane that runs alongside the copy, so the bar never stalls —
+  "done" still waits for the last hash; mismatches collected into
   one report
 - Optional parallel copy pool: N workers pull file payloads from a
   shared FIFO while the tree walk stays sequential (core count
@@ -77,7 +86,9 @@ just GTK4, GIO and Rust.
 - "Open as Administrator" via gvfsd-admin + pkexec polkit prompt;
   elevated windows get a red frame
 - "Open in Terminal" (detected emulator) and an embedded VTE
-  terminal panel (F4) that follows the active tab's directory
+  terminal panel (F4) that follows the active tab's directory —
+  the injected `cd` waits for a clean prompt, so it never lands
+  inside half-typed input or a running foreground program
 - System clipboard interop both ways (x-special/gnome-copied-files +
   text/uri-list); cut items ghost out, staged copies show a marker
 - Drag & drop: rows carry a gdk::FileList payload; drop = move,

@@ -109,12 +109,11 @@ fn is_row_selected(view: &FileView, obj: &crate::file_object::FileObject) -> boo
 /// active (icon grid or list view).
 fn selected_files(view: &FileView) -> Vec<gio::File> {
     let mut out = Vec::new();
-    let sel = view
-        .sel_icons
-        .borrow()
-        .as_ref()
-        .cloned()
-        .or_else(|| view.sel_list.borrow().as_ref().cloned());
+    let sel = match view.view_mode.get() {
+        crate::file_view::ViewMode::Icons => view.sel_icons.borrow().as_ref().cloned(),
+        crate::file_view::ViewMode::List => view.sel_list.borrow().as_ref().cloned(),
+        crate::file_view::ViewMode::Compact => view.sel_compact.borrow().as_ref().cloned(),
+    };
     let Some(sel) = sel else { return out };
     let model = sel.model();
     let Some(model) = model else { return out };
