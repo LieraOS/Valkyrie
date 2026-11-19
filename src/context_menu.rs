@@ -114,31 +114,49 @@ fn wire_dismiss_once(view: &FileView, widget: &gtk4::Widget) {
     let dismiss = gtk4::GestureClick::new();
     dismiss.set_propagation_phase(gtk4::PropagationPhase::Capture);
     let ctx = view.ctx_popover.clone();
-    dismiss.connect_pressed(move |_, _, _, _| {
-        if let Some(p) = ctx.borrow().as_ref() {
-            if p.is_visible() {
-                p.popdown();
-            }
+    dismiss.connect_pressed(move |g, _, x, y| {
+        let Some(p) = ctx.borrow().clone() else {
+            return;
+        };
+        if !p.is_visible() {
+            return;
+        }
+        // Presses inside the popover's own surface DO propagate to this
+        // capture controller — a popover is a widget child of the view,
+        // so its subtree is part of the same propagation path. Dismiss
+        // only when the picked widget lies outside the menu; an inside
+        // press may be a menu row or a submenu entry about to open.
+        let inside = g
+            .widget()
+            .and_then(|w| w.pick(x, y, gtk4::PickFlags::DEFAULT))
+            .is_some_and(|w| {
+                let pop_w = p.upcast_ref::<gtk4::Widget>();
+                w == *pop_w || pop_w.is_ancestor(&w)
+            });
+        if !inside {
+            p.popdown();
         }
     });
     if let Some(root) = widget.root() {
         root.add_controller(dismiss);
 
         // autohide-off popovers also survive focus loss: the menu of
-        // window A would float above window B. Pop it down when the
-        // owning window deactivates.
+        // window A would float above window B. A focus controller on
+        // the window fires `leave` only when focus exits the whole
+        // widget hierarchy — our own popup surfaces count as inside,
+        // so a nested submenu grabbing the seat does not false-fire
+        // the way an is-active watch would.
         if let Ok(win) = root.dynamic_cast::<gtk4::Window>() {
+            let focus = gtk4::EventControllerFocus::new();
             let ctx = view.ctx_popover.clone();
-            win.connect_notify_local(Some("is-active"), move |w, _| {
-                if w.is_active() {
-                    return;
-                }
+            focus.connect_leave(move |_| {
                 if let Some(p) = ctx.borrow().as_ref() {
                     if p.is_visible() {
                         p.popdown();
                     }
                 }
             });
+            win.add_controller(focus);
         }
     }
 }

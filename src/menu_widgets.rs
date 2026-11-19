@@ -64,6 +64,18 @@ pub fn submenu(parent: &gtk4::Box, outer: &gtk4::Popover, label: &str) -> SubMen
     let pop2 = pop.clone();
     row.connect_clicked(move |_| pop2.popup());
 
+    // Cascading menus open on hover: entering the row pops up its
+    // nested popover and closes any sibling submenu still open, so
+    // only one cascade is visible at a time.
+    let motion = gtk4::EventControllerMotion::new();
+    let pop3 = pop.clone();
+    let row2 = row.clone();
+    motion.connect_enter(move |_, _, _| {
+        close_sibling_submenus(&row2);
+        pop3.popup();
+    });
+    row.add_controller(motion);
+
     // The row owns the nested popover as a child widget. When the row
     // is torn down (menu rebuilt on the next click, tab closed,
     // window destroyed) it must detach the popover first — GTK warns
@@ -99,6 +111,10 @@ impl SubMenu {
             }
             run();
         });
+        let motion = gtk4::EventControllerMotion::new();
+        let page = self.page.clone();
+        motion.connect_enter(move |_, _, _| close_submenus_in(&page));
+        button.add_controller(motion);
         self.page.append(&button);
     }
 
@@ -113,6 +129,45 @@ pub fn separator(page: &gtk4::Box) {
     page.append(&gtk4::Separator::new(gtk4::Orientation::Horizontal));
 }
 
+/// Popdown every nested submenu popover in `page` — entering a plain
+/// menu entry ends any open cascade on that page. A submenu popover
+/// is parented to its entry row, so it shows up as a child of a row.
+fn close_submenus_in(page: &gtk4::Box) {
+    let mut sib = page.first_child();
+    while let Some(s) = sib {
+        let mut child = s.first_child();
+        while let Some(c) = child {
+            if let Ok(pop) = c.clone().downcast::<gtk4::Popover>() {
+                pop.popdown();
+            }
+            child = c.next_sibling();
+        }
+        sib = s.next_sibling();
+    }
+}
+
+/// Same as `close_submenus_in` but skips `row` itself — entering a
+/// submenu row closes the other cascades while its own pops up.
+fn close_sibling_submenus(row: &gtk4::Button) {
+    let Some(page) = row.parent() else { return };
+    let Ok(page) = page.downcast::<gtk4::Box>() else {
+        return;
+    };
+    let mut sib = page.first_child();
+    while let Some(s) = sib {
+        if s != *row.upcast_ref::<gtk4::Widget>() {
+            let mut child = s.first_child();
+            while let Some(c) = child {
+                if let Ok(pop) = c.clone().downcast::<gtk4::Popover>() {
+                    pop.popdown();
+                }
+                child = c.next_sibling();
+            }
+        }
+        sib = s.next_sibling();
+    }
+}
+
 /// Row that closes every popover in `closers`, then runs.
 fn item_multi(page: &gtk4::Box, closers: &[gtk4::Popover], label: &str, run: impl Fn() + 'static) {
     let button = row_widget(label, false, None, None);
@@ -123,6 +178,12 @@ fn item_multi(page: &gtk4::Box, closers: &[gtk4::Popover], label: &str, run: imp
         }
         run();
     });
+    // Hovering a plain entry closes any open submenu on this page —
+    // classic cascading-menu behaviour.
+    let motion = gtk4::EventControllerMotion::new();
+    let page2 = page.clone();
+    motion.connect_enter(move |_, _, _| close_submenus_in(&page2));
+    button.add_controller(motion);
     page.append(&button);
 }
 
@@ -142,6 +203,10 @@ fn check_item_multi(
         }
         run();
     });
+    let motion = gtk4::EventControllerMotion::new();
+    let page2 = page.clone();
+    motion.connect_enter(move |_, _, _| close_submenus_in(&page2));
+    button.add_controller(motion);
     page.append(&button);
 }
 

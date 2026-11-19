@@ -165,8 +165,22 @@ impl Sidebar {
         dismiss.set_propagation_phase(gtk4::PropagationPhase::Capture);
         dismiss.set_button(0);
         let p = popover.clone();
-        dismiss.connect_pressed(move |_, _, _, _| {
-            if p.is_visible() {
+        dismiss.connect_pressed(move |g, _, x, y| {
+            if !p.is_visible() {
+                return;
+            }
+            // Same fix as the file context menu: presses inside the
+            // popover's own surface reach this capture controller too
+            // (the popover is a widget child). Only a pick outside the
+            // menu counts as an outside press.
+            let inside = g
+                .widget()
+                .and_then(|w| w.pick(x, y, gtk4::PickFlags::DEFAULT))
+                .is_some_and(|w| {
+                    let pop_w = p.upcast_ref::<gtk4::Widget>();
+                    w == *pop_w || pop_w.is_ancestor(&w)
+                });
+            if !inside {
                 p.popdown();
             }
         });
@@ -179,16 +193,20 @@ impl Sidebar {
             if let Some(root) = pop.root() {
                 root.add_controller(dismiss.clone());
 
-                // Same as the file context menu: an autohide-off popover
-                // outlives window focus and floats over the window that
-                // gains it. Pop it down when the window deactivates.
+                // Same as the file context menu: an autohide-off
+                // popover outlives window focus and floats over the
+                // window that gains it. A focus controller leaves only
+                // when focus exits the whole window hierarchy — own
+                // popup surfaces count as inside.
                 if let Ok(win) = root.dynamic_cast::<gtk4::Window>() {
+                    let focus = gtk4::EventControllerFocus::new();
                     let p = p.clone();
-                    win.connect_notify_local(Some("is-active"), move |w, _| {
-                        if !w.is_active() && p.is_visible() {
+                    focus.connect_leave(move |_| {
+                        if p.is_visible() {
                             p.popdown();
                         }
                     });
+                    win.add_controller(focus);
                 }
             } else {
                 dismiss_wired.set(false);
