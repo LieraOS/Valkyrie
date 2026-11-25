@@ -222,6 +222,15 @@ Design notes: location identity is the `gio::File` URI; file
 operations run on worker threads with progress over an mpsc channel;
 enumeration is async via `gtk::DirectoryList`.
 
+Filename effects (`fxlabel.rs`, `fxcfg.rs`): the name captions in
+list, grid and compact views are `FxLabel` widgets (GtkLabel is a
+final class, so this is a real Pango/Cairo widget). They read
+`~/.config/ragnar-settings/font-effects.ini` [names] live — an
+optional brightness pulse or a two-colour wave travelling across
+the glyphs, configured in Ragnar Settings → Appearance → Fonts.
+Disabled means plain text rendering with zero extra cost; the
+hover-expansion of truncated names keeps working.
+
 ## License
 
 GPL-3.0-or-later — Copyright (C) 2026 Jörg Schröder, LieraOS Project.

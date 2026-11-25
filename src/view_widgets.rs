@@ -49,10 +49,13 @@ pub fn build_column_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4::
                 240,
                 |box_| {
                     box_.append(&gtk4::Image::new());
-                    let label = gtk4::Label::builder()
-                        .xalign(0.0)
-                        .ellipsize(gtk4::pango::EllipsizeMode::End)
-                        .build();
+                    // FxLabel instead of a plain Label: renders the
+                    // optional filename effect from font-effects.ini
+                    // (pulse / colour wave) and falls back to plain
+                    // text while it is disabled.
+                    let label = crate::fxlabel::FxLabel::new();
+                    label.set_xalign(0.0);
+                    label.set_ellipsize(gtk4::pango::EllipsizeMode::End);
                     label.set_widget_name(CAPTION_MARKER);
                     box_.append(&label);
                 },
@@ -63,7 +66,7 @@ pub fn build_column_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4::
                     if let Some(label) = box_
                         .first_child()
                         .and_then(|w| w.next_sibling())
-                        .and_downcast::<gtk4::Label>()
+                        .and_downcast::<crate::fxlabel::FxLabel>()
                     {
                         label.set_label(&obj.display_name());
                     }
@@ -423,12 +426,14 @@ pub(crate) fn hide_caption_for(w: &gtk4::Widget) {
 /// overlay caption, so the first line sits exactly where the
 /// truncated one is and only the continuation lines float.
 fn show_hover_caption(row: &gtk4::Widget) {
-    let Some(label) = find_by_name(row, CAPTION_MARKER, 4).and_downcast::<gtk4::Label>() else {
+    let Some(label) =
+        find_by_name(row, CAPTION_MARKER, 4).and_downcast::<crate::fxlabel::FxLabel>()
+    else {
         return;
     };
     // Only expand when the name is actually truncated — short names
     // already read in full and need no overlay.
-    if !label.layout().is_ellipsized() {
+    if !label.is_ellipsized() {
         hide_caption_for(row);
         return;
     }

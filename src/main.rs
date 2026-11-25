@@ -16,6 +16,8 @@ mod dnd;
 mod fast_copy;
 mod file_object;
 mod file_view;
+mod fxcfg;
+mod fxlabel;
 mod i18n;
 mod menu_widgets;
 mod menubar;

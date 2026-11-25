@@ -1,6 +1,6 @@
 [package]
 name = "valkyrie"
-version = "0.9.8"
+version = "0.9.9"
 edition = "2021"
 description = "Valkyrie — the LieraOS file manager"
 license = "GPL-3.0-or-later"
@@ -16,6 +16,8 @@ gettext-rs = "0.8"
 libc = "0.2.177"
 blake3 = "1.8.2"
 vte4 = "0.8"
+pangocairo = "0.20"
+cairo-rs = "0.20"
 
 [profile.release]
 lto = true

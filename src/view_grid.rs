@@ -57,14 +57,15 @@ pub fn build_grid_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4::Gr
         // very long name can never blow up the whole grid layout),
         // max two lines, ellipsized at the end — the real filename is
         // untouched; the tooltip still shows it in full.
-        let caption = gtk4::Label::builder()
-            .max_width_chars(11)
-            .ellipsize(gtk4::pango::EllipsizeMode::End)
-            .lines(2)
-            .wrap(true)
-            .wrap_mode(gtk4::pango::WrapMode::WordChar)
-            .justify(gtk4::Justification::Center)
-            .build();
+        // FxLabel: same geometry as the old Label, plus the optional
+        // filename effect (see crate::fxcfg).
+        let caption = crate::fxlabel::FxLabel::new();
+        caption.set_max_width_chars(11);
+        caption.set_ellipsize(gtk4::pango::EllipsizeMode::End);
+        caption.set_lines(2);
+        caption.set_wrap(true);
+        caption.set_wrap_mode(gtk4::pango::WrapMode::WordChar);
+        caption.set_justify(gtk4::Justification::Center);
         caption.set_widget_name(view_widgets::CAPTION_MARKER);
         // GtkGridView gives every cell the height of the tallest item,
         // so a single long filename (wrapped to two lines) inflated
@@ -126,7 +127,7 @@ pub fn build_grid_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4::Gr
             box_.first_child().and_downcast::<gtk4::Image>(),
             box_.first_child()
                 .and_then(|w| w.next_sibling())
-                .and_downcast::<gtk4::Label>(),
+                .and_downcast::<crate::fxlabel::FxLabel>(),
         ) else {
             return;
         };

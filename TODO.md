@@ -561,3 +561,5 @@
       list, not only get_mount()), navigates into it directly, and on
       a failed mount request waits up to 3s for the automounter's
       in-flight mount before showing an error.
+- `fxlabel.rs`/`fxcfg.rs`: more effect modes
+  (rainbow cycle, typewriter) possible.

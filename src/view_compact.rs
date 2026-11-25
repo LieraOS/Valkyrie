@@ -51,12 +51,13 @@ pub fn build_compact_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4:
         box_.append(&image);
         // Single-line caption, ellipsized at the end — the full name
         // stays in the tooltip and the file object itself.
-        let caption = gtk4::Label::builder()
-            .xalign(0.0)
-            .single_line_mode(true)
-            .ellipsize(gtk4::pango::EllipsizeMode::End)
-            .hexpand(true)
-            .build();
+        // FxLabel: same geometry as the old Label, plus the
+        // optional filename effect (see crate::fxcfg).
+        let caption = crate::fxlabel::FxLabel::new();
+        caption.set_xalign(0.0);
+        caption.set_single_line_mode(true);
+        caption.set_ellipsize(gtk4::pango::EllipsizeMode::End);
+        caption.set_hexpand(true);
         caption.set_widget_name(view_widgets::CAPTION_MARKER);
         box_.append(&caption);
 
@@ -98,7 +99,7 @@ pub fn build_compact_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4:
             box_.first_child().and_downcast::<gtk4::Image>(),
             box_.first_child()
                 .and_then(|w| w.next_sibling())
-                .and_downcast::<gtk4::Label>(),
+                .and_downcast::<crate::fxlabel::FxLabel>(),
         ) else {
             return;
         };

@@ -245,6 +245,17 @@ operationen laufen auf Worker-Threads mit Fortschritt über einen
 mpsc-Channel; die Enumeration läuft asynchron via
 `gtk::DirectoryList`.
 
+Dateinamen-Effekte (`fxlabel.rs`, `fxcfg.rs`): Die Namens-
+Beschriftungen in Listen-, Raster- und Kompaktansicht sind
+`FxLabel`-Widgets (GtkLabel ist final, daher ein echtes
+Pango/Cairo-Widget). Sie lesen
+`~/.config/ragnar-settings/font-effects.ini` [names] live —
+optional Helligkeits-Pulsieren oder eine über die Glyphen
+laufende Farbwelle, einstellbar in Ragnar Settings →
+Erscheinungsbild → Schriften. Deaktiviert = normales Rendern
+ohne Mehrkosten; die Hover-Erweiterung abgeschnittener Namen
+funktioniert weiter.
+
 ## Lizenz
 
 GPL-3.0-or-later — Copyright (C) 2026 Jörg Schröder, LieraOS Project.

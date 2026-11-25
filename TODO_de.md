@@ -651,3 +651,5 @@
       get_mount()), navigiert direkt hinein und wartet bei einem
       fehlgeschlagenen Mount-Request bis zu 3s auf den In-Flight-
       Mount des Automounters, bevor ein Fehler gezeigt wird.
+- `fxlabel.rs`/`fxcfg.rs`: weitere Effekt-Modi
+  (Regenbogen-Zyklus, Typewriter) denkbar.
