@@ -2,6 +2,55 @@
 
 ## Open
 
+- [ ] Stale thumbnails after in-place overwrite: an image overwritten
+      with new content (e.g. logo.png re-saved from GIMP) keeps showing
+      the OLD thumbnail — F5/refresh does not help, disabling previews
+      does not help, even an app restart does not help; opening the
+      file itself shows the new content. The thumbnail cache is
+      apparently not invalidated on mtime/content change (freedesktop
+      thumb spec keys on mtime) — needs investigation whether the
+      cache key or the regeneration check is wrong
+- [ ] Whole-view flicker on directory updates + crash on update
+      storms: any change in the shown directory visibly re-pops all
+      items — predates the recent monitor work (came with the original
+      "downloaded file does not appear until F5" fix). The intent
+      (live updates, incl. partial-download → final-file transitions)
+      is right, but the rebuild must be invisible and incremental.
+      Worse: under rapid file churn (e.g. kernel build writing
+      thousands of files) the repeated full rebuilds once crashed
+      Valkyrie outright — updates must be coalesced/debounced and
+      applied as diffs, never whole-list swaps
+- [ ] Compact view: no context menu on background right-click: in the
+      compact list view, right-clicking empty space does nothing — the
+      menu only opens when clicking directly on a file. Pasting into
+      the current directory requires switching to the list view first.
+      The secondary-click gesture is apparently only wired per-item,
+      missing on the view's background/empty area (list + grid views
+      handle it)
+- [ ] Implement org.freedesktop.FileManager1 D-Bus interface:
+      Firefox/VS Code/etc. "show in folder" does NOT consult the
+      inode/directory mime default — it calls ShowItems on the
+      well-known bus name, which currently activates whatever file
+      manager ships the service file (Nemo on systems that have it).
+      Valkyrie needs: export the interface (ShowItems/ShowFolders/
+      ShowItemProperties → open window, navigate, select item) from
+      the running app plus a valkyrie.FileManager1.service file for
+      activation when nothing is running
+- [ ] USB copy progress stalls look like a freeze: the write-safety
+      sync_data() gate every 32MB blocks hard while the stick drains,
+      and the first ~70MB sprint into kernel write-back makes the bar
+      jump — users see sprint → full stop → small chunks → full stop
+      and read it as "stuck". Keep the guarantee (data on device when
+      done) but pace it fluidly — continuous sync_file_range streaming
+      instead of hard 32MB stops, and/or an honest second progress
+      phase ("writing to device…") so the stall is understood
+- [ ] Copy between two windows blocks BOTH windows: copying a large
+      file (e.g. an ISO) from window A into window B leaves both
+      windows completely unresponsive until the copy finishes — no
+      navigation, no interaction, only close/minimize; only a newly
+      opened window stays usable. The copy apparently runs on the
+      main loop instead of an async worker with progress — fatal UX,
+      must not block either window
 - [ ] Desktop wallpaper integration decision (ragnar-desktop-view
       already renders desktop icons — Valkyrie must not duplicate)
 - [ ] Real Nextcloud/ownCloud verification with TLS (davs://) —

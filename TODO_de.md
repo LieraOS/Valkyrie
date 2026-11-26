@@ -2,6 +2,58 @@
 
 ## Offen
 
+- [ ] Veraltete Thumbnails nach Überschreiben: Ein in-place
+      überschriebenes Bild (z. B. logo.png aus GIMP neu gespeichert)
+      zeigt weiterhin das ALTE Vorschaubild — Aktualisieren hilft
+      nicht, Vorschau abschalten hilft nicht, sogar ein App-Neustart
+      hilft nicht; beim Öffnen zeigt die Datei den neuen Inhalt. Der
+      Thumbnail-Cache wird offenbar bei mtime-/Inhaltsänderung nicht
+      invalidiert (freedesktop-Thumb-Spec keyed auf mtime) — zu prüfen,
+      ob Cache-Key oder Regenerations-Check falsch sind
+- [ ] Flackern der gesamten Ansicht bei Verzeichnis-Updates + Absturz
+      bei Update-Stürmen: Jede Änderung im angezeigten Verzeichnis
+      lässt kurz sichtbar alle Einträge neu aufploppen — älter als die
+      jüngste Monitor-Arbeit (kam mit dem ursprünglichen „Download
+      erscheint erst nach F5"-Fix). Live-Updates sind gewollt und
+      richtig (inkl. Partial-Download-Cache-Datei → fertige Datei),
+      aber der Neuaufbau muss unsichtbar und inkrementell sein.
+      Schlimmer: Bei schneller Datei-Flut (z. B. Kernel-Build mit
+      tausenden Schreibvorgängen) ist Valkyrie durch die wiederholten
+      Voll-Rebuilds bereits einmal abgestürzt — Updates müssen
+      coalesced/debounced und als Diff angewendet werden, nie als
+      ganzer Listen-Swap
+- [ ] Kompaktansicht: kein Kontextmenü bei Rechtsklick ins Leere: In
+      der Kompaktliste öffnet Rechtsklick auf freiem Hintergrund kein
+      Menü — nur direkt auf einer Datei erscheint es. Einfügen ins
+      aktuelle Verzeichnis erfordert erst einen Wechsel in die
+      Listenansicht. Die Secondary-Click-Geste hängt offenbar nur
+      pro-Eintrag, nicht am Hintergrund des Views (Listen-/Symbol-
+      ansicht können es)
+- [ ] org.freedesktop.FileManager1-D-Bus-Interface implementieren:
+      „Datei anzeigen" in Firefox/VS Code u. a. fragt NICHT den
+      inode/directory-MIME-Default — es ruft ShowItems auf dem
+      bekannten Bus-Namen auf, was aktuell den Dateimanager startet,
+      dessen Service-File existiert (auf Systemen mit Nemo: Nemo).
+      Valkyrie braucht: Interface-Export (ShowItems/ShowFolders/
+      ShowItemProperties → Fenster öffnen, navigieren, Eintrag
+      selektieren) aus der laufenden App plus
+      valkyrie.FileManager1.service-Datei für die Aktivierung, wenn
+      nichts läuft
+- [ ] USB-Kopie sieht aus wie eingefroren: Das write-safety
+      sync_data()-Gate alle 32 MB blockiert hart, während der Stick
+      nachschreibt; die ersten ~70 MB sprinten in den Kernel-Writeback
+      → Balken springt → Vollstopp → kleine Schritte → Vollstopp.
+      Nutzer lesen das als „hängt". Garantie behalten (Daten auf dem
+      Gerät bei Fertig), aber flüssig pacen — kontinuierliches
+      sync_file_range-Streaming statt harter 32-MB-Stopps, und/oder
+      eine ehrliche zweite Anzeigephase („Schreibe auf Gerät …")
+- [ ] Kopieren zwischen zwei Fenstern blockiert BEIDE Fenster: Eine
+      große Datei (z. B. ISO) von Fenster A nach Fenster B kopieren
+      macht beide Fenster bis zum Ende komplett unbenutzbar — keine
+      Navigation, keine Interaktion, nur Schließen/Minimieren; nur ein
+      neu geöffnetes Fenster bleibt nutzbar. Die Kopie läuft
+      offenbar im Main-Loop statt in einem async-Worker mit
+      Fortschritt — fatale UX, darf kein Fenster blockieren
 - [ ] Entscheidung Desktop-Hintergrundbild-Integration (ragnar-desktop-view
       rendert bereits Desktop-Icons — Valkyrie darf das nicht doppeln)
 - [ ] Echte Nextcloud/ownCloud-Verifikation mit TLS (davs://) —
