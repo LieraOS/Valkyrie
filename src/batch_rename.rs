@@ -20,7 +20,7 @@ use crate::i18n::tr;
 pub fn show(parent: &impl IsA<gtk4::Widget>, files: &[gio::File]) {
     let dialog = gtk4::Window::builder()
         .title(tr("Rename Files"))
-        .modal(true)
+        .modal(false)
         .default_width(480)
         .build();
     if let Some(window) = parent
@@ -153,7 +153,7 @@ pub fn show(parent: &impl IsA<gtk4::Widget>, files: &[gio::File]) {
             gtk4::AlertDialog::builder()
                 .message(tr("Some files could not be renamed"))
                 .detail(failed.join("\n"))
-                .modal(true)
+                .modal(false)
                 .build()
                 .show(parent_window.as_ref());
         }

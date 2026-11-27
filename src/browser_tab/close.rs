@@ -73,10 +73,9 @@ fn on_close_button(nb: &gtk4::Notebook, page: &gtk4::NotebookPage, x: f64, y: f6
     let mut child = tab.first_child();
     while let Some(widget) = child {
         if widget.widget_name() == "tab-close" {
-            let a = widget.allocation();
-            return nb
-                .compute_point(&widget, &press)
-                .is_some_and(|p| point_in_rect(p.x(), p.y(), a.width() as f32, a.height() as f32));
+            return nb.compute_point(&widget, &press).is_some_and(|p| {
+                point_in_rect(p.x(), p.y(), widget.width() as f32, widget.height() as f32)
+            });
         }
         child = widget.next_sibling();
     }

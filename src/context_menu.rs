@@ -495,7 +495,7 @@ pub(crate) fn open_admin(parent: &gtk4::Widget, file: gio::File) {
         gtk4::AlertDialog::builder()
             .message(crate::i18n::tr("Could not open as administrator"))
             .detail(e.to_string())
-            .modal(true)
+            .modal(false)
             .build()
             .show(window.as_ref());
     }

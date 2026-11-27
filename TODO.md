@@ -2,55 +2,6 @@
 
 ## Open
 
-- [ ] Stale thumbnails after in-place overwrite: an image overwritten
-      with new content (e.g. logo.png re-saved from GIMP) keeps showing
-      the OLD thumbnail — F5/refresh does not help, disabling previews
-      does not help, even an app restart does not help; opening the
-      file itself shows the new content. The thumbnail cache is
-      apparently not invalidated on mtime/content change (freedesktop
-      thumb spec keys on mtime) — needs investigation whether the
-      cache key or the regeneration check is wrong
-- [ ] Whole-view flicker on directory updates + crash on update
-      storms: any change in the shown directory visibly re-pops all
-      items — predates the recent monitor work (came with the original
-      "downloaded file does not appear until F5" fix). The intent
-      (live updates, incl. partial-download → final-file transitions)
-      is right, but the rebuild must be invisible and incremental.
-      Worse: under rapid file churn (e.g. kernel build writing
-      thousands of files) the repeated full rebuilds once crashed
-      Valkyrie outright — updates must be coalesced/debounced and
-      applied as diffs, never whole-list swaps
-- [ ] Compact view: no context menu on background right-click: in the
-      compact list view, right-clicking empty space does nothing — the
-      menu only opens when clicking directly on a file. Pasting into
-      the current directory requires switching to the list view first.
-      The secondary-click gesture is apparently only wired per-item,
-      missing on the view's background/empty area (list + grid views
-      handle it)
-- [ ] Implement org.freedesktop.FileManager1 D-Bus interface:
-      Firefox/VS Code/etc. "show in folder" does NOT consult the
-      inode/directory mime default — it calls ShowItems on the
-      well-known bus name, which currently activates whatever file
-      manager ships the service file (Nemo on systems that have it).
-      Valkyrie needs: export the interface (ShowItems/ShowFolders/
-      ShowItemProperties → open window, navigate, select item) from
-      the running app plus a valkyrie.FileManager1.service file for
-      activation when nothing is running
-- [ ] USB copy progress stalls look like a freeze: the write-safety
-      sync_data() gate every 32MB blocks hard while the stick drains,
-      and the first ~70MB sprint into kernel write-back makes the bar
-      jump — users see sprint → full stop → small chunks → full stop
-      and read it as "stuck". Keep the guarantee (data on device when
-      done) but pace it fluidly — continuous sync_file_range streaming
-      instead of hard 32MB stops, and/or an honest second progress
-      phase ("writing to device…") so the stall is understood
-- [ ] Copy between two windows blocks BOTH windows: copying a large
-      file (e.g. an ISO) from window A into window B leaves both
-      windows completely unresponsive until the copy finishes — no
-      navigation, no interaction, only close/minimize; only a newly
-      opened window stays usable. The copy apparently runs on the
-      main loop instead of an async worker with progress — fatal UX,
-      must not block either window
 - [ ] Desktop wallpaper integration decision (ragnar-desktop-view
       already renders desktop icons — Valkyrie must not duplicate)
 - [ ] Real Nextcloud/ownCloud verification with TLS (davs://) —
@@ -58,6 +9,66 @@
       ETag/chunk semantics still pending on the real server
 ## Done
 
+- [x] Stale thumbnails after in-place overwrite: GIO reports
+      thumbnail::path even for entries whose embedded Thumb::MTime
+      no longer matches the file — Valkyrie trusted it blindly and
+      never regenerated. Workers now validate the PNG's tEXt
+      Thumb::MTime against the live mtime and regenerate on mismatch
+      (src/thumbnails/generate.rs), and the in-memory texture cache
+      is keyed on uri+mtime so an overwrite can't repaint the old
+      thumb. Also fixed: generate_pdf deleted its temp PNG before
+      reading it, so PDFs never got thumbnails at all
+- [x] USB copy progress no longer looks frozen: the bar used to
+      show bytes handed to the page cache (sprint → hard stop while
+      the pacer throttled → small chunks). In paced mode (removable
+      targets) progress now reports device-completed bytes from the
+      sysfs write counter — inside the throttle loop AND in a drain
+      phase after the write loop, so the bar moves continuously at
+      real write speed and the tail doesn't park near-full
+- [x] All clicks dead after mouse side-buttons (back/forward):
+      GTK creates an implicit pointer-focus grab on EVERY button
+      press but only releases it on a 1-5 button release — every
+      8/9 click leaks a grab that then swallows all normal clicks
+      (motion/hover still works, back/forward still work since they
+      bypass the grab path). The old workaround (invisible popover
+      parented to the tab widget) failed whenever the stale grab
+      target was an ANCESTOR of the popover — e.g. the paned divider,
+      the tab container itself, anything above it — and a press on a
+      sidebar-level target left the tab-scoped event controller
+      blind. Now the side-button controller lives on the toplevel
+      (sees 8/9 events no matter where the grab retargets them) and
+      the revoke popover is parented to the window — only a stale
+      target of the window widget itself could still defeat it,
+      which picking virtually never returns. Verified under Xvfb:
+      button-8 press on the paned divider froze the old binary
+      completely; the fixed build still delivers clicks
+- [x] Whole-view flicker + crash on update storms: the file_view
+      monitor swapped the entire GtkDirectoryList on every debounced
+      event — visible re-pop of all rows and, under churn (kernel
+      builds), main-loop starvation. Replaced by src/dir_model: own
+      ListStore + FileMonitor, Changed/Created/Deleted/Moved events
+      update single rows via async query_info (per-path trailer
+      timers, >64 pending paths escalate), structural events debounce
+      into an async re-enumeration + minimal splice diff — no flicker,
+      selection and scroll survive
+- [x] Copy between windows blocked both windows: two interlocking
+      causes — the progress window was .modal(true) (labwc grabs
+      focus for the transient group) and, the real blocker, the
+      per-copy Changed-event → full-directory-list rebuild storm
+      starved the main loop. Modal dropped; the rebuild storm is
+      gone with DirModel (above)
+- [x] Compact view: no context menu on background right-click —
+      attach_background_menu + attach_empty_click_clear were never
+      wired on the compact ColumnView; now matching list/grid
+- [x] org.freedesktop.FileManager1 D-Bus interface implemented
+      (src/filemanager1.rs): owns the well-known name on the session
+      bus (running instance wins over activation), exports
+      ShowItems (opens parent dir + selects the item via pending
+      selection that lands when enumeration surfaces the row),
+      ShowFolders (window + tabs), ShowItemProperties. Ships
+      data/org.freedesktop.FileManager1.service (Exec=valkyrie
+      --gapplication-service, held alive while it owns the name) —
+      Firefox "show in folder" now reaches Valkyrie
 - [x] Terminal panel cd-injection: the panel followed navigation by
       feeding `cd` into the running shell's input — with a half-typed
       command at the prompt the injected `cd ` landed mid-line or

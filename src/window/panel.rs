@@ -25,7 +25,7 @@ impl ValkyrieWindow {
 
         if !self.panel_pos_restored.replace(true) {
             // Position counts from the top: allocation minus panel height.
-            let h = self.vpaned.allocated_height();
+            let h = self.vpaned.height();
             let want = crate::settings::terminal_panel_height();
             if h > want {
                 self.vpaned.set_position(h - want);
@@ -47,7 +47,7 @@ pub(crate) fn watch_position(this: &Rc<ValkyrieWindow>) {
             if !this.terminal_panel.widget.is_visible() {
                 return;
             }
-            let h = p.allocated_height();
+            let h = p.height();
             let pos = p.position();
             if h > 0 && pos > 0 && pos < h {
                 crate::settings::set_terminal_panel_height(h - pos);

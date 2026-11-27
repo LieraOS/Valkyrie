@@ -77,7 +77,9 @@ pub fn copy(
     // Streamed fallback: read → (optional) hash → write per chunk.
     // In paced mode the DevicePacer throttles the loop so the dirty
     // backlog never outruns the destination by more than a small
-    // window — progress stays honest and the tail fsync short.
+    // window — and reports device-completed bytes, so the progress
+    // bar moves at real write speed instead of sprinting into the
+    // page cache and then freezing while the stick drains.
     let mut hasher = want_hash.then(blake3::Hasher::new);
     let mut pacer = paced.then(|| DevicePacer::new(dst));
     let mut buf = vec![0u8; COPY_BUF];
@@ -95,17 +97,27 @@ pub fn copy(
         }
         dst_file.write_all(&buf[..n])?;
         done += n as u64;
-        report(done);
         if let Some(p) = pacer.as_mut() {
-            p.pace(n as u64, cancel)?;
+            p.pace(n as u64, cancel, report)?;
+        } else {
+            report(done);
         }
     }
     dst_file.flush()?;
+    // Drain phase (paced): the bar keeps moving at real device speed
+    // while the remaining backlog flushes — a frozen near-full bar
+    // reads as "stuck" exactly like the mid-copy stalls did. Capped
+    // by a stall deadline: a wedged device counter must never turn
+    // into an endless wait, sync_all below is the real guarantee.
+    if let Some(p) = pacer.as_mut() {
+        p.drain(done, cancel, report)?;
+    }
     // Final fsync: file contents and metadata must be on the device
     // before the file counts as copied — "finished" must mean
     // "safe to unplug", not "sitting in the page cache". In paced
     // mode only the small backlog window remains to drain.
     dst_file.sync_all()?;
+    report(done);
     preserve_metadata(src, dst);
     Ok(CopyOutcome::Copied(hasher.map(|h| h.finalize())))
 }
@@ -156,12 +168,26 @@ impl DevicePacer {
         }
     }
 
+    /// Bytes the device has genuinely completed, capped at this
+    /// copy's cache hand-off — the honest progress value.
+    fn shown(&self) -> u64 {
+        device_written(self.stat.as_path(), self.base).min(self.written)
+    }
+
     /// Account `add` freshly written bytes, then sleep in short
     /// slices until the device's write counter is within
-    /// `PACE_BACKLOG` of the cache lead.
-    fn pace(&mut self, add: u64, cancel: &gio::Cancellable) -> io::Result<()> {
+    /// `PACE_BACKLOG` of the cache lead. Every slice reports the
+    /// device-completed byte count, so throttling phases show as a
+    /// slowed bar — never as a freeze.
+    fn pace(
+        &mut self,
+        add: u64,
+        cancel: &gio::Cancellable,
+        report: &mut dyn FnMut(u64),
+    ) -> io::Result<()> {
         self.written += add;
         if self.stat.as_os_str().is_empty() {
+            report(self.written);
             return Ok(());
         }
         while self
@@ -172,7 +198,43 @@ impl DevicePacer {
             if cancel.is_cancelled() {
                 return Err(io::Error::new(io::ErrorKind::Interrupted, "cancelled"));
             }
-            std::thread::sleep(std::time::Duration::from_millis(10));
+            report(self.shown());
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        report(self.shown());
+        Ok(())
+    }
+
+    /// Keep reporting device-completed bytes after the write loop
+    /// until the backlog is on the device — the bar crawls to 100%
+    /// at real drain speed instead of parking mid-file. Bounded by
+    /// a no-progress deadline (sysfs counters also count other
+    /// writers and may never exactly reach `written`).
+    fn drain(
+        &mut self,
+        total: u64,
+        cancel: &gio::Cancellable,
+        report: &mut dyn FnMut(u64),
+    ) -> io::Result<()> {
+        if self.stat.as_os_str().is_empty() {
+            return Ok(());
+        }
+        let mut stalled = 0u32;
+        let mut last = 0u64;
+        loop {
+            let shown = self.shown().min(total);
+            report(shown);
+            if shown >= total || cancel.is_cancelled() {
+                break;
+            }
+            stalled = if shown > last { 0 } else { stalled + 1 };
+            last = shown;
+            if stalled > 200 {
+                // ~10s without any completed sector — give up on the
+                // visual phase, sync_all finishes the job.
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
         }
         Ok(())
     }

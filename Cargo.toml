@@ -9,7 +9,7 @@ homepage = "https://lieraos.local"
 repository = ""
 
 [dependencies]
-gtk4 = { version = "0.9", package = "gtk4", features = ["v4_10"] }
+gtk4 = { version = "0.9", package = "gtk4", features = ["v4_12"] }
 glib = "0.20"
 gio = { version = "0.20", features = ["v2_70"] }
 gettext-rs = "0.8"
@@ -34,6 +34,7 @@ assets = [
     ["target/release/valkyrie", "usr/bin/valkyrie", "755"],
     ["data/org.lieraos.valkyrie.desktop", "usr/share/applications/", "644"],
     ["data/org.lieraos.valkyrie.gschema.xml", "usr/share/glib-2.0/schemas/", "644"],
+    ["data/org.freedesktop.FileManager1.service", "usr/share/dbus-1/services/", "644"],
     ["data/icons/valkyrie.png", "usr/share/icons/hicolor/512x512/apps/", "644"],
     ["Theme/Valkyrie/**/*", "usr/share/icons/Valkyrie/", "644"],
     ["target/locale/de/LC_MESSAGES/valkyrie.mo", "usr/share/locale/de/LC_MESSAGES/valkyrie.mo", "644"],

@@ -69,6 +69,35 @@ impl FileObject {
         self.imp().info.borrow().clone()
     }
 
+    /// Swap in freshly queried attributes. The live directory model
+    /// calls this right before a 1-item items_changed so every cached
+    /// accessor (size, mtime, type, hidden) reads the new state.
+    /// sort_key and is_dot are recomputed alongside — a rename of
+    /// this entry produces a new FileObject elsewhere, so they only
+    /// differ here when a backend reports a new display name.
+    pub fn set_info(&self, info: &gio::FileInfo) {
+        *self.imp().info.borrow_mut() = Some(info.clone());
+        *self.imp().sort_key.borrow_mut() = self.display_name().to_lowercase();
+        self.imp().is_dot.set(self.raw_name().starts_with('.'));
+    }
+
+    /// True when the displayed attributes still match `info` — the
+    /// dir model's diff relies on it: unchanged rows emit no signal
+    /// at all, so refreshes never re-populate the view visibly.
+    pub fn same_state(&self, info: &gio::FileInfo) -> bool {
+        let Some(old) = self.info() else {
+            return false;
+        };
+        old.attribute_uint64("standard::size") == info.attribute_uint64("standard::size")
+            && old.boolean("standard::is-hidden") == info.boolean("standard::is-hidden")
+            && (old.has_attribute("standard::type").then(|| old.file_type()))
+                == (info
+                    .has_attribute("standard::type")
+                    .then(|| info.file_type()))
+            && old.modification_date_time().map(|d| d.to_unix())
+                == info.modification_date_time().map(|d| d.to_unix())
+    }
+
     /// Display name suitable for the UI (falls back to the raw filename).
     /// The raw attribute getter is used deliberately: display_name()
     /// warns when a backend leaves standard::display-name unset.

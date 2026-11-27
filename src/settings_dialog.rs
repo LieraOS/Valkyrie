@@ -64,7 +64,7 @@ fn dropdown(labels: &[String], selected: u32) -> gtk4::DropDown {
 pub fn show(this: &Rc<ValkyrieWindow>) {
     let dialog = gtk4::Window::builder()
         .transient_for(&this.widget)
-        .modal(true)
+        .modal(false)
         .title(tr("Preferences"))
         .default_width(640)
         .default_height(420)

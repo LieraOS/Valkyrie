@@ -3,8 +3,7 @@
 // Copyright (C) 2026 Jörg Schröder, LieraOS Project
 //
 // The data pipeline behind the file views:
-//   DirectoryList   — async enumeration + folder monitoring
-//   MapListModel    — wraps each FileInfo in a FileObject (carries the File)
+//   DirModel        — live ListStore (enumeration, monitor, minimal diffs)
 //   FilterListModel — drops hidden entries unless enabled
 //   SortListModel   — directories first, then the chosen field
 // Filter and sorter state live in GSettings so they survive restarts.
@@ -13,8 +12,10 @@ use std::cell::Cell;
 use std::cmp::Ordering;
 use std::rc::Rc;
 
+use gtk4::gio;
+#[cfg(test)]
+use gtk4::glib;
 use gtk4::prelude::*;
-use gtk4::{gio, glib};
 
 use crate::file_object::FileObject;
 
@@ -72,42 +73,20 @@ pub struct ViewModel {
     pub list: gtk4::SortListModel,
     filter: gtk4::CustomFilter,
     show_hidden: Rc<Cell<bool>>,
-    /// The map stage over the DirectoryList — kept so a content
-    /// refresh can swap in a fresh enumeration without touching
-    /// filter, sorter, selections or widgets. None for search
-    /// results (for_entries): they do not track a directory.
-    dir_map: Option<gtk4::MapListModel>,
-    /// Displayed location — needed to rebuild the DirectoryList.
-    location: Option<gio::File>,
+    /// Live directory store — keeps the monitor watch alive and owns
+    /// the refresh path. None for search results (for_entries):
+    /// they do not track a directory.
+    dir: Option<crate::dir_model::DirModel>,
 }
 
 impl ViewModel {
     /// Build the model pipeline for `location`, seeded from GSettings.
+    /// The DirModel fills its store asynchronously and keeps it live
+    /// through the directory monitor.
     pub fn new(location: &gio::File) -> Self {
-        let dir_list = gtk4::DirectoryList::new(Some(ATTRIBUTES), Some(location));
-        dir_list.set_monitored(true);
-
-        let parent = location.clone();
-        let mapped = gtk4::MapListModel::new(Some(dir_list), move |item| {
-            // Every item is a FileInfo by DirectoryList contract.
-            let info = item
-                .downcast_ref::<gio::FileInfo>()
-                .expect("DirectoryList item");
-            // name() warns when a backend leaves standard::name unset;
-            // fall back through the safe attribute getters.
-            let name = info
-                .attribute_byte_string("standard::name")
-                .map(|n| n.to_string())
-                .or_else(|| {
-                    info.attribute_as_string("standard::display-name")
-                        .map(|n| n.to_string())
-                })
-                .unwrap_or_default();
-            FileObject::new(&parent.child(&name), Some(info)).upcast::<glib::Object>()
-        });
-        let mut this = Self::from_base(mapped.clone().upcast());
-        this.dir_map = Some(mapped);
-        this.location = Some(location.clone());
+        let dir = crate::dir_model::DirModel::new(location);
+        let mut this = Self::from_base(dir.store.clone().upcast());
+        this.dir = Some(dir);
         this
     }
 
@@ -144,26 +123,26 @@ impl ViewModel {
             list,
             filter,
             show_hidden,
-            dir_map: None,
-            location: None,
+            dir: None,
         }
     }
 
-    /// Re-enumerate the directory contents in place: a fresh
-    /// DirectoryList is swapped under the existing MapListModel, so
-    /// filter, sorter, selection models and widgets all stay put —
-    /// only the items change. Called by the FileView's own directory
-    /// monitor: GtkDirectoryList's internal monitoring misses files
-    /// that were *renamed into* the directory (browser downloads,
-    /// `mv`, atomic saves), which is why we monitor ourselves.
+    /// Re-enumerate the directory and apply a minimal diff — rows
+    /// that vanished drop, rows that changed emit a 1-item signal,
+    /// new rows append. Selections, sorter and widgets all stay put.
     /// No-op for search-result models.
     pub fn refresh_contents(&self) {
-        let (Some(map), Some(location)) = (&self.dir_map, &self.location) else {
-            return;
-        };
-        let dir_list = gtk4::DirectoryList::new(Some(ATTRIBUTES), Some(location));
-        dir_list.set_monitored(true);
-        map.set_model(Some(&dir_list));
+        if let Some(dir) = &self.dir {
+            dir.refresh();
+        }
+    }
+
+    /// Forward enumeration-error notifications to `f` — search
+    /// result models have no directory and never fire.
+    pub fn connect_error_notify<F: Fn(Option<&glib::Error>) + 'static>(&self, f: F) {
+        if let Some(dir) = &self.dir {
+            dir.connect_error_notify(f);
+        }
     }
 
     /// Plug the ColumnView's sorter under a directories-first sorter.
@@ -315,27 +294,24 @@ fn natural_cmp(a: &str, b: &str) -> Ordering {
 // externally created file without being recreated?
 #[test]
 fn dirlist_monitor_picks_up_new_file() {
-    if gtk4::init().is_err() {
-        eprintln!("no display — skipping");
-        return;
-    }
     let dir = std::env::temp_dir().join(format!("vky-dlmon-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
-    let location = gio::File::for_path(&dir);
+    let probe = dir.clone();
+    // GTK objects only live on the init thread — run the body on the
+    // shared GTK worker; None means "no display", i.e. skip.
+    let Some(count) = crate::testkit::on_gtk(move || {
+        let location = gio::File::for_path(&probe);
+        let target = probe.join("new-file.txt");
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(400));
+            std::fs::write(&target, b"hello").unwrap();
+        });
 
-    let target = dir.join("new-file.txt");
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(400));
-        std::fs::write(&target, b"hello").unwrap();
-    });
-
-    // Own thread-default context: tests run in parallel threads and
-    // the shared default context would steal each other's wakeups.
-    // The DirectoryList is built inside so its internal file monitor
-    // attaches to this context.
-    let ctx = glib::MainContext::new();
-    let count = ctx
-        .with_thread_default(|| {
+        // Own thread-default context: the shared default context
+        // would steal each other's wakeups. The DirectoryList is
+        // built inside so its internal monitor attaches here.
+        let ctx = glib::MainContext::new();
+        ctx.with_thread_default(|| {
             let dl = gtk4::DirectoryList::new(Some("standard::name"), Some(&location));
             dl.set_monitored(true);
             let deadline = std::time::Instant::now() + std::time::Duration::from_secs(4);
@@ -350,33 +326,36 @@ fn dirlist_monitor_picks_up_new_file() {
             }
             count
         })
-        .unwrap_or(0);
+        .unwrap_or(0)
+    }) else {
+        eprintln!("no display — skipping");
+        std::fs::remove_dir_all(&dir).ok();
+        return;
+    };
     std::fs::remove_dir_all(&dir).ok();
     assert_eq!(count, 1, "monitored DirectoryList must see the new file");
 }
 
-/// The FileView refresh path: after our own directory monitor fires,
-/// refresh_contents swaps a fresh DirectoryList under the existing
-/// MapListModel — renamed-in files (browser downloads) must surface
-/// in the final sorted pipeline. Guards the fix for the stale-view
-/// bug where GtkDirectoryList's internal monitor drops moved-in
-/// events.
+/// The FileView refresh path: refresh_contents diffs a fresh
+/// enumeration into the live DirModel store — renamed-in files
+/// (browser downloads) must surface in the final sorted pipeline.
+/// Guards the fix for the stale-view bug where
+/// GtkDirectoryList-based monitoring dropped moved-in events.
 #[test]
 fn refresh_contents_picks_up_renamed_file() {
-    if gtk4::init().is_err() {
-        eprintln!("no display — skipping");
-        return;
-    }
     let dir = std::env::temp_dir().join(format!("vky-vm-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
-    let location = gio::File::for_path(&dir);
-    let vm = ViewModel::new(&location);
-
-    let ctx = glib::MainContext::new();
-    let names = ctx
-        .with_thread_default(|| {
-            std::fs::write(dir.join("file.part"), b"payload").unwrap();
-            std::fs::rename(dir.join("file.part"), dir.join("file.bin")).unwrap();
+    let probe = dir.clone();
+    let Some(names) = crate::testkit::on_gtk(move || {
+        let location = gio::File::for_path(&probe);
+        let ctx = glib::MainContext::new();
+        ctx.with_thread_default(|| {
+            // Model construction inside the scope: DirModel's
+            // enumeration and monitor attach to the thread-default
+            // context — this private ctx, not the global default.
+            let vm = ViewModel::new(&location);
+            std::fs::write(probe.join("file.part"), b"payload").unwrap();
+            std::fs::rename(probe.join("file.part"), probe.join("file.bin")).unwrap();
             vm.refresh_contents();
 
             let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
@@ -396,7 +375,12 @@ fn refresh_contents_picks_up_renamed_file() {
             }
             names
         })
-        .unwrap_or_default();
+        .unwrap_or_default()
+    }) else {
+        eprintln!("no display — skipping");
+        std::fs::remove_dir_all(&dir).ok();
+        return;
+    };
     std::fs::remove_dir_all(&dir).ok();
     assert!(
         names.iter().any(|n| n == "file.bin"),

@@ -54,7 +54,7 @@ pub fn ask(
 
     let window = gtk4::Window::builder()
         .title(tr("Name conflict"))
-        .modal(true)
+        .modal(false)
         .transient_for(parent)
         .resizable(false)
         .default_width(460)

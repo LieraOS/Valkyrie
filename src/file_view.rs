@@ -13,6 +13,7 @@ use std::rc::Rc;
 use gtk4::gio;
 use gtk4::prelude::*;
 
+mod select_files;
 mod selection;
 
 use crate::view_model::{SortField, ViewModel};
@@ -25,6 +26,10 @@ pub(crate) type OptionsCallbacks = Rc<RefCell<Vec<Box<dyn Fn()>>>>;
 /// separate collection — selection churns far more often than view
 /// options, and listeners only care about one of them.
 pub(crate) type SelCallbacks = Rc<RefCell<Vec<Box<dyn Fn()>>>>;
+/// Enumeration-error listeners: `Some(err)` when a listing failed
+/// (e.g. no read permission), `None` when a listing succeeded —
+/// drives the tab's error banner.
+pub(crate) type ErrorCallbacks = Rc<RefCell<Vec<Box<dyn Fn(Option<&glib::Error>)>>>>;
 
 /// Handles that let the FileView steer column-header sorting: the
 /// four columns (to resolve a field to its column) and the view's
@@ -106,20 +111,17 @@ pub struct FileView {
     sel_notify: SelCallbacks,
     /// Parent-directory monitor resurrecting the view when the
     /// displayed folder is deleted and recreated in place (build
-    /// scripts, checkouts) — the DirectoryList's own monitor dies
-    /// with the old inode and would never fire again.
+    /// scripts, checkouts) — the model's directory watch dies with
+    /// the old inode and would never fire again.
     dir_watch: Rc<RefCell<Option<gio::FileMonitor>>>,
-    /// Content monitor on the displayed directory itself — feeds
-    /// the debounced refresh. GtkDirectoryList's internal monitor
-    /// misses files renamed *into* the dir, so we watch ourselves.
-    dir_monitor: Rc<RefCell<Option<gio::FileMonitor>>>,
-    /// One scheduled refresh at a time — file-monitor events arrive
-    /// in bursts (batch copies, downloads).
-    refresh_pending: Rc<RefCell<Option<glib::SourceId>>>,
-    /// Trailing-edge timer for pure content churn (Changed/
-    /// AttributeChanged): re-armed on every event so a refresh only
-    /// runs once the write storm pauses — downloads do not flicker.
-    churn_pending: Rc<RefCell<Option<glib::SourceId>>>,
+    /// Basenames asked to select once the model surfaces them —
+    /// FileManager1's ShowItems lands here: the window opens the
+    /// parent dir and the file gets selected the moment the async
+    /// enumeration (or a later diff) produces its row.
+    pending_select: Rc<RefCell<Vec<String>>>,
+    /// Enumeration-failure listeners — the current model forwards
+    /// the DirModel channel, the tab renders it as a banner.
+    error_notify: ErrorCallbacks,
 }
 
 impl FileView {
@@ -152,19 +154,16 @@ impl FileView {
             sort_state: Rc::new(RefCell::new(None)),
             sel_notify: Rc::new(RefCell::new(Vec::new())),
             dir_watch: Rc::new(RefCell::new(None)),
-            dir_monitor: Rc::new(RefCell::new(None)),
-            refresh_pending: Rc::new(RefCell::new(None)),
-            churn_pending: Rc::new(RefCell::new(None)),
+            pending_select: Rc::new(RefCell::new(Vec::new())),
+            error_notify: Rc::new(RefCell::new(Vec::new())),
         };
         this.set_location(location);
         // Break the watch→callback→view reference cycle on teardown:
         // the monitor's callback clones this FileView, so the pair
         // only dies together once the monitor is explicitly dropped.
         let dir_watch = this.dir_watch.clone();
-        let dir_monitor = this.dir_monitor.clone();
         this.widget.connect_destroy(move |_| {
             *dir_watch.borrow_mut() = None;
-            *dir_monitor.borrow_mut() = None;
         });
         // Files dropped anywhere on the view land in the displayed dir.
         crate::dnd::attach_view_drop(&this);
@@ -180,6 +179,15 @@ impl FileView {
     /// Currently displayed directory.
     pub fn location(&self) -> Option<gio::File> {
         self.location.borrow().clone()
+    }
+
+    /// Refresh the displayed directory in place (F5) — a diff into
+    /// the live store, so selection, scroll position and realized
+    /// rows all survive.
+    pub fn refresh(&self) {
+        if let Some(m) = self.model.borrow().as_ref() {
+            m.refresh_contents();
+        }
     }
 
     /// Re-evaluate clipboard styling on every *visible* row: walks
@@ -452,74 +460,10 @@ impl FileView {
                 view.set_location(&loc);
             }
         });
-        // Content monitor: GtkDirectoryList's internal monitoring
-        // misses files renamed INTO the directory — which is how
-        // browsers download (temp file renamed into place), how mv
-        // works and how atomic saves land. Watch the directory
-        // ourselves: structural events refresh almost immediately
-        // (300 ms debounce), while pure content churn only refreshes
-        // after one second of quiet — a file being written shows up
-        // at once but the view stays calm until it is done.
-        *self.dir_monitor.borrow_mut() = location
-            .monitor_directory(gio::FileMonitorFlags::NONE, gio::Cancellable::NONE)
-            .ok()
-            .inspect(|monitor| {
-                let model_slot = self.model.clone();
-                let pending = self.refresh_pending.clone();
-                let churn = self.churn_pending.clone();
-                monitor.connect_changed(move |_, _, _, event| {
-                    match event {
-                        gio::FileMonitorEvent::Changed
-                        | gio::FileMonitorEvent::AttributeChanged => {
-                            // Content churn — a file is being written.
-                            // Re-arm the quiet timer so the refresh
-                            // runs once the write storm pauses instead
-                            // of re-rendering the whole view every
-                            // chunk. The row itself already exists.
-                            if let Some(old) = churn.borrow_mut().take() {
-                                old.remove();
-                            }
-                            let churn_c = churn.clone();
-                            let model_slot = model_slot.clone();
-                            let id = glib::timeout_add_local_once(
-                                std::time::Duration::from_secs(1),
-                                move || {
-                                    *churn_c.borrow_mut() = None;
-                                    if let Some(m) = model_slot.borrow().as_ref() {
-                                        m.refresh_contents();
-                                    }
-                                },
-                            );
-                            *churn.borrow_mut() = Some(id);
-                        }
-                        _ => {
-                            // Structural events (created/deleted/
-                            // renamed) and ChangesDoneHint — a file
-                            // closed after writing, i.e. "finished".
-                            // Near-immediate refresh; an armed churn
-                            // timer is superseded by it.
-                            if let Some(old) = churn.borrow_mut().take() {
-                                old.remove();
-                            }
-                            if pending.borrow().is_some() {
-                                return;
-                            }
-                            let pending_c = pending.clone();
-                            let model_slot = model_slot.clone();
-                            let id = glib::timeout_add_local_once(
-                                std::time::Duration::from_millis(300),
-                                move || {
-                                    *pending_c.borrow_mut() = None;
-                                    if let Some(m) = model_slot.borrow().as_ref() {
-                                        m.refresh_contents();
-                                    }
-                                },
-                            );
-                            *pending.borrow_mut() = Some(id);
-                        }
-                    }
-                });
-            });
+        // Live updates are the model's job now: DirModel owns the
+        // directory monitor and applies each event as the smallest
+        // possible store mutation (row update or minimal diff) —
+        // no flicker, no rebuild storms on the main context.
         self.apply_model(ViewModel::new(location));
     }
 
@@ -544,14 +488,27 @@ impl FileView {
         *self.item_count.borrow_mut() = 0;
 
         // Async enumeration finishes after navigation — listeners
-        // (status bar) must be refreshed whenever rows arrive.
+        // (status bar) must be refreshed whenever rows arrive, and
+        // pending selections (FileManager1 ShowItems) get picked up
+        // the moment their row lands.
         let count = self.item_count.clone();
         let count_notify = self.count_notify.clone();
+        let this = self.clone();
         model.list.connect_items_changed(move |m, _, _, _| {
             let n = m.n_items();
             *count.borrow_mut() = n;
             for cb in count_notify.borrow().iter() {
                 cb(n);
+            }
+            this.apply_pending_select();
+        });
+
+        // Enumeration failures surface to the tab through the view's
+        // own listener list — the tab owns the banner widget.
+        let cbs = self.error_notify.clone();
+        model.connect_error_notify(move |err| {
+            for cb in cbs.borrow().iter() {
+                cb(err);
             }
         });
 
@@ -602,6 +559,12 @@ impl FileView {
     /// (async enumeration, folder monitoring, filtering).
     pub fn connect_count_notify<F: Fn(u32) + 'static>(&self, f: F) {
         self.count_notify.borrow_mut().push(Box::new(f));
+    }
+
+    /// Register `f` for enumeration failures (`Some(err)`) and
+    /// recoveries (`None`) of the displayed directory.
+    pub fn connect_error_notify<F: Fn(Option<&glib::Error>) + 'static>(&self, f: F) {
+        self.error_notify.borrow_mut().push(Box::new(f));
     }
 
     /// Register the caller's activation handler (dir → navigate,

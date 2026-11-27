@@ -85,7 +85,7 @@ pub fn compress_dialog(parent: &gtk4::Widget, files: &[gio::File]) {
     let dir = dir.clone();
 
     let dialog = gtk4::Window::builder()
-        .modal(true)
+        .modal(false)
         .title(tr("Create Archive"))
         .default_width(360)
         .build();

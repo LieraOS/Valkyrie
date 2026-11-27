@@ -377,7 +377,7 @@ fn stateful_bool(name: &str, initial: bool) -> gio::SimpleAction {
 /// keep it in sync with the NOTICE/README attribution.
 fn show_about(window: &gtk4::ApplicationWindow) {
     let about = gtk4::AboutDialog::builder()
-        .modal(true)
+        .modal(false)
         .transient_for(window)
         .program_name("Valkyrie")
         .version(env!("CARGO_PKG_VERSION"))

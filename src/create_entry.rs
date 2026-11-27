@@ -102,7 +102,7 @@ pub(crate) fn ask_name(
 ) {
     let window = gtk4::Window::builder()
         .title(title)
-        .modal(true)
+        .modal(false)
         .resizable(false)
         .build();
     if let Some(root) = parent.root() {

@@ -129,5 +129,10 @@ pub fn build_compact_view(view: &FileView, model: &gtk4::SortListModel) -> gtk4:
         }
     });
 
+    // Same background contract as the icon grid: right-click on
+    // empty space opens the directory menu, left-click clears the
+    // selection — compact rows do not span the full cell width.
+    view_widgets::attach_background_menu(view, &grid_view.clone().upcast());
+    view_widgets::attach_empty_click_clear(view, &grid_view.clone().upcast());
     grid_view
 }

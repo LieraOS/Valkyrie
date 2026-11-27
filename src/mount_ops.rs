@@ -137,7 +137,7 @@ fn fail(widget: &gtk4::Widget, message: &str, error: &glib::Error) {
     let dialog = gtk4::AlertDialog::builder()
         .message(message)
         .detail(error.message())
-        .modal(true)
+        .modal(false)
         .build();
     dialog.show(window_of(widget).as_ref());
 }

@@ -22,11 +22,12 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
 use std::sync::{mpsc, Arc, Mutex, OnceLock};
 
-use gtk4::gdk_pixbuf::Pixbuf;
 use gtk4::prelude::*;
 use gtk4::{gdk, gio, glib};
 
 use crate::file_object::FileObject;
+
+mod generate;
 
 /// Thumbnail edge length — the freedesktop "large" size, which covers
 /// every zoom level the icon view offers.
@@ -46,14 +47,17 @@ static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 
 /// The unit of work handed to the pool.
 enum Work {
-    /// Thumbnail already exists in the shared cache — just read it.
-    Read(PathBuf),
-    /// No cached thumbnail: decode, scale and store a new one (image).
-    Generate(gio::File),
-    /// PDF first page → PNG via pdftoppm (poppler-utils).
-    Pdf(gio::File),
-    /// Video frame → PNG via ffmpegthumbnailer (if installed).
-    Video(gio::File),
+    /// Cached PNG exists — the worker still validates the embedded
+    /// Thumb::MTime against the file before trusting the bytes
+    /// (GIO reports thumbnail::path even for stale entries).
+    Read {
+        path: PathBuf,
+        file: gio::File,
+        ct: String,
+    },
+    /// No usable cached thumbnail: decode/scale/store a fresh one —
+    /// the content type picks the generator (image, pdf, video).
+    Fresh { file: gio::File, ct: String },
 }
 
 /// What the receiver needs to route a finished job back to its cell.
@@ -103,10 +107,8 @@ fn job_queue() -> &'static mpsc::Sender<(u64, Work)> {
                 };
                 let (id, work) = job;
                 let bytes = match work {
-                    Work::Read(path) => std::fs::read(path).ok(),
-                    Work::Generate(file) => generate(&file),
-                    Work::Pdf(file) => generate_pdf(&file),
-                    Work::Video(file) => generate_video(&file),
+                    Work::Read { path, file, ct } => generate::read_cached_or(&path, &file, &ct),
+                    Work::Fresh { file, ct } => generate::exec_fresh(&file, &ct),
                 };
                 glib::idle_add_once(move || deliver(id, bytes));
             });
@@ -167,7 +169,14 @@ pub fn attach(obj: &FileObject, image: &gtk4::Image, px: i32) {
         return;
     }
     let generation = next_generation(image);
-    let uri = obj.file().uri().to_string();
+    // The texture key carries the mtime: an in-place overwrite must
+    // miss the cache, not repaint the old thumbnail.
+    let mtime = obj
+        .info()
+        .and_then(|i| i.modification_date_time())
+        .map(|d| d.to_unix())
+        .unwrap_or(0);
+    let uri = format!("{}@{}", obj.file().uri(), mtime);
 
     // In-memory hit — the common case when scrolling back or when a
     // neighbouring bind already decoded the same file.
@@ -226,174 +235,23 @@ fn plan(obj: &FileObject) -> Option<Work> {
     if obj.is_dir() {
         return None;
     }
-    // A cached thumbnail (by us or any other application) wins.
+    // A cached thumbnail (by us or any other application) wins — but
+    // only after the worker confirms its Thumb::MTime is still the
+    // file's. The stale path regenerates inside the same job.
     if let Some(path) = obj.thumbnail_path() {
-        return Some(Work::Read(path));
+        return Some(Work::Read {
+            path,
+            file: obj.file(),
+            ct: obj.content_type(),
+        });
     }
     // Self-generation is limited to local files — decoding is cheap
     // for images, and PDF/video use external thumbnailers.
     if !obj.file().is_native() {
         return None;
     }
-    let ct = obj.content_type();
-    if ct.starts_with("image/") {
-        return Some(Work::Generate(obj.file()));
-    }
-    if ct == "application/pdf" {
-        return Some(Work::Pdf(obj.file()));
-    }
-    if ct.starts_with("video/") {
-        return Some(Work::Video(obj.file()));
-    }
-    None
-}
-
-/// Decode `file`, scale to the thumbnail size, encode as PNG with the
-/// freedesktop metadata and store it in the shared cache.
-fn generate(file: &gio::File) -> Option<Vec<u8>> {
-    let path = file.path()?;
-    let pixbuf = Pixbuf::from_file_at_scale(&path, THUMB_SIZE, THUMB_SIZE, true).ok()?;
-    let uri = file.uri().to_string();
-    let mtime = std::fs::metadata(&path)
-        .and_then(|m| m.modified())
-        .ok()
-        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-        .map(|d| d.as_secs().to_string())
-        .unwrap_or_default();
-    let bytes = pixbuf
-        .save_to_bufferv(
-            "png",
-            &[
-                ("tEXt::Thumb::URI", uri.as_str()),
-                ("tEXt::Thumb::MTime", mtime.as_str()),
-                ("tEXt::Software", "Valkyrie"),
-            ],
-        )
-        .ok()?;
-    cache_store(&uri, &bytes);
-    Some(bytes)
-}
-
-/// Render the first page of a PDF to a thumbnail via pdftoppm
-/// (poppler-utils). The PNG is scaled to THUMB_SIZE and cached.
-fn generate_pdf(file: &gio::File) -> Option<Vec<u8>> {
-    let path = file.path()?;
-    let tmp = std::env::temp_dir().join(format!(
-        "valkyrie-pdf-{}-{}.png",
-        std::process::id(),
-        path.file_name()?.to_string_lossy()
-    ));
-    // -png -singlefile -scale-to 256 → one PNG at THUMB_SIZE max edge.
-    let out = std::process::Command::new("pdftoppm")
-        .arg("-png")
-        .arg("-singlefile")
-        .arg("-scale-to")
-        .arg(THUMB_SIZE.to_string())
-        .arg(&path)
-        .arg(&tmp)
-        .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    let png_path = if tmp.exists() {
-        tmp.clone()
-    } else {
-        // pdftoppm appends .png despite -singlefile on some versions.
-        tmp.with_extension("png")
-    };
-    let _bytes = std::fs::read(&png_path).ok()?;
-    let _ = std::fs::remove_file(&png_path);
-    // Re-encode with freedesktop metadata via Pixbuf so the cache
-    // entry matches the spec (Thumb::URI + MTime).
-    let pixbuf = Pixbuf::from_file_at_scale(&png_path, THUMB_SIZE, THUMB_SIZE, true).ok()?;
-    let uri = file.uri().to_string();
-    let mtime = std::fs::metadata(&path)
-        .and_then(|m| m.modified())
-        .ok()
-        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-        .map(|d| d.as_secs().to_string())
-        .unwrap_or_default();
-    let bytes = pixbuf
-        .save_to_bufferv(
-            "png",
-            &[
-                ("tEXt::Thumb::URI", uri.as_str()),
-                ("tEXt::Thumb::MTime", mtime.as_str()),
-                ("tEXt::Software", "Valkyrie"),
-            ],
-        )
-        .ok()?;
-    cache_store(&uri, &bytes);
-    Some(bytes)
-}
-
-/// Extract a video frame as a thumbnail via ffmpegthumbnailer.
-/// Returns None silently when the tool is not installed — the icon
-/// view keeps the generic video icon in that case.
-fn generate_video(file: &gio::File) -> Option<Vec<u8>> {
-    let path = file.path()?;
-    let tmp = std::env::temp_dir().join(format!(
-        "valkyrie-vid-{}-{}.png",
-        std::process::id(),
-        path.file_name()?.to_string_lossy()
-    ));
-    let out = std::process::Command::new("ffmpegthumbnailer")
-        .arg("-i")
-        .arg(&path)
-        .arg("-o")
-        .arg(&tmp)
-        .arg("-s")
-        .arg(THUMB_SIZE.to_string())
-        .arg("-c")
-        .arg("png")
-        .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    let bytes = std::fs::read(&tmp).ok()?;
-    let _ = std::fs::remove_file(&tmp);
-    // Re-encode with freedesktop metadata so the cache entry matches
-    // the spec. Pixbuf::from_file_at_scale can't reuse the deleted
-    // tmp, so decode the raw bytes we already hold.
-    let loader = gtk4::gdk_pixbuf::PixbufLoader::new();
-    loader.write(&bytes).ok()?;
-    loader.close().ok()?;
-    let pixbuf = loader.pixbuf()?;
-    let uri = file.uri().to_string();
-    let mtime = std::fs::metadata(&path)
-        .and_then(|m| m.modified())
-        .ok()
-        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-        .map(|d| d.as_secs().to_string())
-        .unwrap_or_default();
-    let bytes = pixbuf
-        .save_to_bufferv(
-            "png",
-            &[
-                ("tEXt::Thumb::URI", uri.as_str()),
-                ("tEXt::Thumb::MTime", mtime.as_str()),
-                ("tEXt::Software", "Valkyrie"),
-            ],
-        )
-        .ok()?;
-    cache_store(&uri, &bytes);
-    Some(bytes)
-}
-/// Written via a temporary file + rename so a kill mid-write can never
-/// leave a half-written PNG behind for other applications.
-fn cache_store(uri: &str, bytes: &[u8]) {
-    let Some(sum) = glib::compute_checksum_for_string(glib::ChecksumType::Md5, uri) else {
-        return;
-    };
-    let dir = glib::user_cache_dir().join("thumbnails/large");
-    if std::fs::create_dir_all(&dir).is_err() {
-        return;
-    }
-    let target = dir.join(format!("{sum}.png"));
-    let tmp = dir.join(format!(".{sum}.tmp"));
-    if std::fs::write(&tmp, bytes).is_ok() {
-        let _ = std::fs::rename(&tmp, &target);
-    }
+    Some(Work::Fresh {
+        file: obj.file(),
+        ct: obj.content_type(),
+    })
 }

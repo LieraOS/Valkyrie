@@ -145,6 +145,11 @@ impl BrowserTab {
         pane.file_view.connect_count_notify(move |_| {
             tab.update_status();
         });
+        // Enumeration failures in the secondary pane get the same
+        // banner as the primary — one shared error channel per tab.
+        let tab = self.clone();
+        pane.file_view
+            .connect_error_notify(move |err| tab.set_enum_error(err));
         let tab = self.clone();
         pane.connect_nav_notify(move || {
             tab.refresh_after_pane_change();
@@ -179,7 +184,7 @@ impl BrowserTab {
 
         self.split_paned.set_end_child(Some(&pane.widget));
         // First split: share the width evenly.
-        let w = self.split_paned.allocated_width();
+        let w = self.split_paned.width();
         if w > 0 {
             self.split_paned.set_position(w / 2);
         }

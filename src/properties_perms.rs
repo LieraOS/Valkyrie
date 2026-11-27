@@ -199,7 +199,7 @@ fn add_owner_row(
                                 tr("Could not change group")
                             })
                             .detail(format!("pkexec exit status {status}"))
-                            .modal(true)
+                            .modal(false)
                             .build()
                             .show(window.as_ref());
                     }
@@ -337,7 +337,7 @@ fn revert_and_alert(
             tr("Could not change group")
         })
         .detail(detail)
-        .modal(true)
+        .modal(false)
         .build()
         .show(window.as_ref());
 }

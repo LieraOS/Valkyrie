@@ -106,3 +106,13 @@ window.elevated menubar {
   padding: 1px 4px;
   border-radius: 4px;
 }
+
+/* Enumeration-failure banner (src/browser_tab.rs): shown above the
+   view when a directory listing fails — e.g. no read permission —
+   so an unreadable folder is not mistaken for an empty one. */
+.error-banner {
+  background-color: alpha(#e01b24, 0.15);
+  color: @theme_text_color;
+  padding: 6px 10px;
+  border-bottom: 1px solid alpha(#e01b24, 0.5);
+}

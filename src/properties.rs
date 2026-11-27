@@ -242,7 +242,7 @@ fn add_name_row(grid: &gtk4::Grid, row: i32, file: &gio::File, name_label: &gtk4
                     gtk4::AlertDialog::builder()
                         .message(tr("Could not rename the file"))
                         .detail(e.message().to_string())
-                        .modal(true)
+                        .modal(false)
                         .build()
                         .show(window.as_ref());
                 }

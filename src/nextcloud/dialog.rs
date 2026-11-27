@@ -23,7 +23,7 @@ pub fn pick_target(
 ) {
     let dialog = gtk4::Window::builder()
         .title(tr("Upload to Cloud"))
-        .modal(true)
+        .modal(false)
         .resizable(false)
         .build();
     if let Some(w) = parent

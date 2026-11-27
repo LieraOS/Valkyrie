@@ -9,6 +9,7 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use gtk4::gio;
+use gtk4::glib;
 use gtk4::prelude::*;
 
 pub(crate) type TitleCallbacks = Rc<RefCell<Vec<Box<dyn Fn(&BrowserTab)>>>>;
@@ -51,6 +52,12 @@ pub struct BrowserTab {
     /// Split view (F3): the horizontal paned hosting the primary view
     /// plus — while split — a secondary PaneView.
     pub(crate) split_paned: gtk4::Paned,
+    /// Banner shown when directory enumeration fails (e.g. no read
+    /// permission) — replaces the misleadingly empty view.
+    pub(crate) error_banner: gtk4::Box,
+    /// The banner's message label — kept beside the banner so
+    /// `set_enum_error` can retext it for each new failure.
+    pub(crate) error_label: gtk4::Label,
     /// Rc-shared like title/back_stack: BrowserTab is cloned freely
     /// (action handlers, callbacks) and every clone must observe the
     /// same split state — a per-clone cell would drop the pane with
@@ -136,6 +143,29 @@ impl BrowserTab {
         container.append(&toolbar);
         container.append(&search_ui.bar);
 
+        // Enumeration-error banner: hidden until the directory model
+        // reports a failed listing (e.g. no read permission) — a
+        // successful pass hides it again.
+        let error_banner = gtk4::Box::new(gtk4::Orientation::Horizontal, 8);
+        error_banner.add_css_class("error-banner");
+        error_banner.set_visible(false);
+        let warn_icon = gtk4::Image::from_icon_name("dialog-warning-symbolic");
+        let error_label = gtk4::Label::builder()
+            .xalign(0.0)
+            .hexpand(true)
+            .ellipsize(gtk4::pango::EllipsizeMode::End)
+            .build();
+        let error_close = gtk4::Button::from_icon_name("window-close-symbolic");
+        error_close.add_css_class("flat");
+        {
+            let banner = error_banner.clone();
+            error_close.connect_clicked(move |_| banner.set_visible(false));
+        }
+        error_banner.append(&warn_icon);
+        error_banner.append(&error_label);
+        error_banner.append(&error_close);
+        container.append(&error_banner);
+
         // --- File views ---
         // The stack's pages are scrollable widgets inside their own
         // ScrolledWindows (see file_view.rs): no outer scroller here —
@@ -197,6 +227,8 @@ impl BrowserTab {
             back_stack: Rc::new(RefCell::new(Vec::new())),
             forward_stack: Rc::new(RefCell::new(Vec::new())),
             split_paned,
+            error_banner,
+            error_label,
             secondary: Rc::new(RefCell::new(None)),
             active_pane: Rc::new(Cell::new(split::ActivePane::Primary)),
         };
@@ -219,6 +251,13 @@ impl BrowserTab {
         let tab2 = tab.clone();
         tab.file_view
             .connect_options_notify(move || tab2.update_status());
+        // Enumeration failures show the banner; a later successful
+        // pass (None) hides it again.
+        {
+            let tab2 = tab.clone();
+            tab.file_view
+                .connect_error_notify(move |err| tab2.set_enum_error(err));
+        }
 
         tab.navigate_to(location);
         tab
@@ -246,12 +285,34 @@ impl BrowserTab {
         // An open search ends on every navigation — the new location
         // loads its own directory model.
         self.search_ui.deactivate();
+        // A stale error banner must not bleed into the new location —
+        // its model reports success/failure on its own.
+        self.error_banner.set_visible(false);
+        self.error_label.set_text("");
         self.file_view.set_location(location);
         self.pathbar.set_location(location);
         self.update_title();
         self.update_nav_sensitivity();
         self.update_status();
         crate::zoom::load(self, location);
+    }
+
+    /// Show or hide the enumeration-error banner: `Some(err)` after a
+    /// failed listing, `None` after a successful one. Shared between
+    /// the primary view and — while split — the secondary pane.
+    pub(crate) fn set_enum_error(&self, err: Option<&glib::Error>) {
+        match err {
+            Some(e) => {
+                let text = if e.matches(gio::IOErrorEnum::PermissionDenied) {
+                    tr("No read permission for this folder").to_string()
+                } else {
+                    format!("{}: {e}", tr("Cannot display the folder contents"))
+                };
+                self.error_label.set_text(&text);
+                self.error_banner.set_visible(true);
+            }
+            None => self.error_banner.set_visible(false),
+        }
     }
 
     /// Tab header text: the basename of the current folder.
@@ -337,13 +398,10 @@ impl BrowserTab {
         self.active_view().select_all();
     }
 
-    /// Re-enumerate the current directory (F5) — refreshes both panes.
+    /// Re-enumerate the current directory (F5) — refreshes both
+    /// panes as a diff into their live stores instead of a rebuild.
     pub fn reload(&self) {
-        self.for_each_view(|v| {
-            if let Some(loc) = v.location() {
-                v.set_location(&loc);
-            }
-        });
+        self.for_each_view(|v| v.refresh());
     }
 
     /// "New Folder" from the File menu — same dialog as the context menu.

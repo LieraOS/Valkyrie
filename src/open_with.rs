@@ -64,7 +64,7 @@ fn chooser_dialog(parent: &gtk4::Widget, file: &gio::File, content_type: &str) {
         .root()
         .and_then(|r| r.downcast::<gtk4::Window>().ok());
     let dialog = gtk4::Window::builder()
-        .modal(true)
+        .modal(false)
         .title(tr("Open With"))
         .default_width(380)
         .default_height(460)

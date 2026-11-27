@@ -22,11 +22,14 @@ pub fn run() -> glib::ExitCode {
         gio::ApplicationFlags::HANDLES_OPEN | gio::ApplicationFlags::NON_UNIQUE,
     );
 
-    app.connect_startup(|_| {
+    app.connect_startup(|app| {
         apply_elevated_theme();
         load_stylesheet();
         gtk4::Window::set_default_icon_name(APP_ICON);
         apply_icon_theme();
+        // FileManager1 for the whole desktop session — "Show in
+        // Folder" from browsers must reach a Valkyrie window.
+        crate::filemanager1::install(app);
         // Schedule drivers for synced cloud folders (interval timers
         // + live watchers) — starts once, rebuilds on every settings
         // change. In connect_startup so both activate and open
@@ -53,7 +56,7 @@ pub fn run() -> glib::ExitCode {
 /// shape and other tweaks) on the default display.
 fn load_stylesheet() {
     let provider = gtk4::CssProvider::new();
-    provider.load_from_data(include_str!("../data/valkyrie.css"));
+    provider.load_from_string(include_str!("../data/valkyrie.css"));
     if let Some(display) = gtk4::gdk::Display::default() {
         gtk4::style_context_add_provider_for_display(
             &display,

@@ -39,7 +39,15 @@ pub fn wire(
     // one level earlier by an EventControllerLegacy in the capture
     // phase: no widget ever sees the press/release pair, the stale
     // state cannot form, and navigation fires off the release.
-    let legacy = gtk4::EventControllerLegacy::new();
+    //
+    // The controller is attached to the TOPLEVEL, not the tab widget:
+    // once GTK's leaked implicit grab retargets events onto a widget
+    // outside the tab subtree (a side-button press over the sidebar,
+    // the header area, dead space), a tab-scoped controller never sees
+    // the release again — no navigation, and the revoke trick below
+    // never runs. Every tab adds its own controller; the mapped guard
+    // makes only the visible tab respond.
+    let legacy = std::rc::Rc::new(gtk4::EventControllerLegacy::new());
     legacy.set_propagation_phase(gtk4::PropagationPhase::Capture);
     let t = tab.clone();
     legacy.connect_event(move |_, event| {
@@ -52,20 +60,27 @@ pub fn wire(
         if !matches!(button, 8 | 9) {
             return glib::Propagation::Proceed;
         }
+        if !t.widget.is_mapped() {
+            // Inactive tab sharing the same toplevel — leave the
+            // event for the visible tab's controller.
+            return glib::Propagation::Proceed;
+        }
         if event.event_type() == gtk4::gdk::EventType::ButtonRelease {
-            // Work around a GTK bug (present in 4.18 and still in main):
-            // handle_pointing_event() creates an implicit pointer-focus
-            // grab on EVERY button press, but only clears it when the
-            // released button is 1-5 — GdkModifierType has no bits for
-            // buttons 6+. A button-8/9 release therefore leaks the grab
-            // and the next regular click is routed to the stale grab
-            // target instead of the widget under the pointer — i.e.
-            // swallowed. The only public lever to drop that grab is a
-            // widget grab on a widget that is NOT an ancestor of the
-            // stale target: _gtk_window_group_add_grab() revokes exactly
-            // those implicit grabs. A mapped Popover adds a grab via
-            // gtk_grab_add internally — ours is invisible (1px, opacity
-            // 0) and pops itself down the instant it maps.
+            // Work around a GTK bug (present in 4.18 and still in
+            // 4.24): handle_pointing_event() creates an implicit
+            // pointer-focus grab on EVERY button press, but only
+            // clears it when the released button is 1-5 —
+            // GdkModifierType has no bits for buttons 6+. A button-
+            // 8/9 release therefore leaks the grab and the next
+            // regular click is routed to the stale grab target
+            // instead of the widget under the pointer — i.e.
+            // swallowed. The only public lever to drop that grab is
+            // a widget grab on a widget that is NOT a descendant of
+            // the stale target: _gtk_window_group_add_grab() revokes
+            // exactly those implicit grabs. A mapped Popover adds a
+            // grab via gtk_grab_add internally — ours is invisible
+            // (1px, opacity 0) and pops itself down the instant it
+            // maps.
             revoke_stale_pointer_grab(&t);
 
             let back = button == 8;
@@ -82,7 +97,17 @@ pub fn wire(
         }
         glib::Propagation::Stop
     });
-    tab.widget.add_controller(legacy);
+    // The tab is not yet inside a toplevel at wiring time — attach on
+    // first map (one-shot, every later map is a no-op).
+    let attached = std::cell::Cell::new(false);
+    tab.widget.connect_map(move |w| {
+        if attached.replace(true) {
+            return;
+        }
+        if let Some(root) = w.root() {
+            root.add_controller((*legacy).clone());
+        }
+    });
 
     // Pathbar breadcrumb activates a directory.
     let t = tab.clone();
@@ -165,23 +190,46 @@ pub fn wire_view_switcher(tab: &BrowserTab, buttons: [&gtk4::ToggleButton; 3]) {
 /// every button press but only clears the grab when the released button
 /// is 1-5, so a back/forward click leaks a grab that swallows the next
 /// regular click. The only public API that forces gtkwindow to revoke
-/// it is adding a widget grab on a widget that is not an ancestor of
+/// it is adding a widget grab on a widget that is not a descendant of
 /// the stale target — a mapped GtkPopover does exactly that internally
 /// (gtk_popover_map → gtk_grab_add → _gtk_window_group_add_grab →
-/// gtk_window_maybe_revoke_implicit_grab). The popover is invisible
-/// (1x1 px, fully transparent) and unmaps itself on ::map, so the whole
-/// add+remove cycle is invisible and finishes inside one frame.
+/// gtk_window_maybe_revoke_implicit_grab).
+///
+/// The popover is parented to the TOPLEVEL, not the tab: the ancestor
+/// check inside maybe_revoke rejects a revoke whenever the stale
+/// target sits ABOVE the popover's parent chain — a press on empty
+/// space can pick the tab widget itself (or higher), which made a
+/// tab-parented popover silently useless and the window permanently
+/// dead. With the window as parent the only stale target the trick
+/// cannot cover is the window widget itself, which picking virtually
+/// never returns.
+///
+/// The popover is invisible (1x1 px, fully transparent) and unmaps
+/// itself on ::map, so the whole add+remove cycle is invisible and
+/// finishes inside one frame.
 fn revoke_stale_pointer_grab(tab: &BrowserTab) {
     thread_local! {
-        static POPOVER: std::cell::RefCell<Option<gtk4::Popover>> =
-            const { std::cell::RefCell::new(None) };
+        // One popover per toplevel — a popover only revokes grabs in
+        // its own window (maybe_revoke skips foci of other toplevels),
+        // and a widget can have only one parent.
+        static POPOVERS: std::cell::RefCell<
+            std::collections::HashMap<usize, gtk4::Popover>,
+        > = std::cell::RefCell::new(std::collections::HashMap::new());
     }
-    POPOVER.with(|slot| {
+    POPOVERS.with(|slot| {
+        let parent: gtk4::Widget = match tab.widget.root() {
+            Some(root) => root.upcast(),
+            // Not yet inside a toplevel — there cannot be a pointer
+            // grab to revoke anyway.
+            None => return,
+        };
+        let key = parent.as_ptr() as usize;
         let popover = slot
             .borrow_mut()
-            .get_or_insert_with(|| {
+            .entry(key)
+            .or_insert_with(|| {
                 let pop = gtk4::Popover::new();
-                pop.set_parent(&tab.widget);
+                pop.set_parent(&parent);
                 pop.set_has_arrow(false);
                 // NOTE: autohide must stay TRUE — gtk_popover_map only
                 // calls gtk_grab_add() (the grab that revokes GTK's

@@ -1041,3 +1041,11 @@ msgstr ""
 "Attribution notice (GPLv3 §7(b)): The author attribution \"Jörg Schröder\" "
 "must be preserved in source file headers and in this About dialog or "
 "equivalent legal notices."
+
+#: src/browser_tab.rs
+msgid "No read permission for this folder"
+msgstr "No read permission for this folder"
+
+#: src/browser_tab.rs
+msgid "Cannot display the folder contents"
+msgstr "Cannot display the folder contents"

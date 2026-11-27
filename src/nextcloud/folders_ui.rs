@@ -151,7 +151,7 @@ pub fn pair_dialog(parent: &gtk4::Widget, local: Option<&str>, on_done: impl Fn(
         .root()
         .and_then(|r| r.downcast::<gtk4::Window>().ok());
     let dialog = gtk4::Window::builder()
-        .modal(true)
+        .modal(false)
         .title(tr("Sync Folder with Cloud"))
         .default_width(420)
         .resizable(false)

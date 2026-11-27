@@ -1050,3 +1050,11 @@ msgstr ""
 
 #~ msgid "Toggle icon view"
 #~ msgstr "Symbolansicht umschalten"
+
+#: src/browser_tab.rs
+msgid "No read permission for this folder"
+msgstr "Keine Leseberechtigung für diesen Ordner"
+
+#: src/browser_tab.rs
+msgid "Cannot display the folder contents"
+msgstr "Der Ordnerinhalt kann nicht angezeigt werden"

@@ -82,9 +82,12 @@ fn spawn_impl(
     title: &str,
     verify: Option<VerifyFlag>,
 ) -> (Sender<Msg>, gio::Cancellable) {
+    // Deliberately NOT modal: a copy can run for minutes and the
+    // user must stay free to keep working in every window — modal
+    // grabs (labwc redirects focus inside the transient tree) made
+    // long transfers block the parent window outright.
     let window = gtk4::Window::builder()
         .title(title)
-        .modal(true)
         .resizable(false)
         .default_width(420)
         .build();

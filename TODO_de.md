@@ -2,58 +2,6 @@
 
 ## Offen
 
-- [ ] Veraltete Thumbnails nach Überschreiben: Ein in-place
-      überschriebenes Bild (z. B. logo.png aus GIMP neu gespeichert)
-      zeigt weiterhin das ALTE Vorschaubild — Aktualisieren hilft
-      nicht, Vorschau abschalten hilft nicht, sogar ein App-Neustart
-      hilft nicht; beim Öffnen zeigt die Datei den neuen Inhalt. Der
-      Thumbnail-Cache wird offenbar bei mtime-/Inhaltsänderung nicht
-      invalidiert (freedesktop-Thumb-Spec keyed auf mtime) — zu prüfen,
-      ob Cache-Key oder Regenerations-Check falsch sind
-- [ ] Flackern der gesamten Ansicht bei Verzeichnis-Updates + Absturz
-      bei Update-Stürmen: Jede Änderung im angezeigten Verzeichnis
-      lässt kurz sichtbar alle Einträge neu aufploppen — älter als die
-      jüngste Monitor-Arbeit (kam mit dem ursprünglichen „Download
-      erscheint erst nach F5"-Fix). Live-Updates sind gewollt und
-      richtig (inkl. Partial-Download-Cache-Datei → fertige Datei),
-      aber der Neuaufbau muss unsichtbar und inkrementell sein.
-      Schlimmer: Bei schneller Datei-Flut (z. B. Kernel-Build mit
-      tausenden Schreibvorgängen) ist Valkyrie durch die wiederholten
-      Voll-Rebuilds bereits einmal abgestürzt — Updates müssen
-      coalesced/debounced und als Diff angewendet werden, nie als
-      ganzer Listen-Swap
-- [ ] Kompaktansicht: kein Kontextmenü bei Rechtsklick ins Leere: In
-      der Kompaktliste öffnet Rechtsklick auf freiem Hintergrund kein
-      Menü — nur direkt auf einer Datei erscheint es. Einfügen ins
-      aktuelle Verzeichnis erfordert erst einen Wechsel in die
-      Listenansicht. Die Secondary-Click-Geste hängt offenbar nur
-      pro-Eintrag, nicht am Hintergrund des Views (Listen-/Symbol-
-      ansicht können es)
-- [ ] org.freedesktop.FileManager1-D-Bus-Interface implementieren:
-      „Datei anzeigen" in Firefox/VS Code u. a. fragt NICHT den
-      inode/directory-MIME-Default — es ruft ShowItems auf dem
-      bekannten Bus-Namen auf, was aktuell den Dateimanager startet,
-      dessen Service-File existiert (auf Systemen mit Nemo: Nemo).
-      Valkyrie braucht: Interface-Export (ShowItems/ShowFolders/
-      ShowItemProperties → Fenster öffnen, navigieren, Eintrag
-      selektieren) aus der laufenden App plus
-      valkyrie.FileManager1.service-Datei für die Aktivierung, wenn
-      nichts läuft
-- [ ] USB-Kopie sieht aus wie eingefroren: Das write-safety
-      sync_data()-Gate alle 32 MB blockiert hart, während der Stick
-      nachschreibt; die ersten ~70 MB sprinten in den Kernel-Writeback
-      → Balken springt → Vollstopp → kleine Schritte → Vollstopp.
-      Nutzer lesen das als „hängt". Garantie behalten (Daten auf dem
-      Gerät bei Fertig), aber flüssig pacen — kontinuierliches
-      sync_file_range-Streaming statt harter 32-MB-Stopps, und/oder
-      eine ehrliche zweite Anzeigephase („Schreibe auf Gerät …")
-- [ ] Kopieren zwischen zwei Fenstern blockiert BEIDE Fenster: Eine
-      große Datei (z. B. ISO) von Fenster A nach Fenster B kopieren
-      macht beide Fenster bis zum Ende komplett unbenutzbar — keine
-      Navigation, keine Interaktion, nur Schließen/Minimieren; nur ein
-      neu geöffnetes Fenster bleibt nutzbar. Die Kopie läuft
-      offenbar im Main-Loop statt in einem async-Worker mit
-      Fortschritt — fatale UX, darf kein Fenster blockieren
 - [ ] Entscheidung Desktop-Hintergrundbild-Integration (ragnar-desktop-view
       rendert bereits Desktop-Icons — Valkyrie darf das nicht doppeln)
 - [ ] Echte Nextcloud/ownCloud-Verifikation mit TLS (davs://) —
@@ -61,6 +9,72 @@
       Nextcloud-ETag-/Chunk-Semantik steht am echten Server noch aus
 ## Erledigt
 
+- [x] Veraltete Thumbnails nach Überschreiben: GIO meldet
+      thumbnail::path auch für Einträge, deren eingebettetes
+      Thumb::MTime nicht mehr zur Datei passt — Valkyrie hat blind
+      vertraut und nie neu generiert. Worker validieren jetzt das
+      tEXt Thumb::MTime der PNG gegen die echte mtime und
+      regenerieren bei Abweichung (src/thumbnails/generate.rs); der
+      In-Memory-Textur-Cache keyed auf uri+mtime, damit ein
+      Überschreiben nie das alte Bild neu zeichnet. Bonus gefixt:
+      generate_pdf löschte sein Temp-PNG vor dem Lesen — PDFs bekamen
+      gar keine Thumbnails
+- [x] USB-Kopie wirkt nicht mehr eingefroren: Der Balken zeigte
+      Bytes, die der Page-Cache übernommen hatte (Sprint → Vollstopp
+      beim Throttlen → kleine Schritte). Im paced-Modus (Wechsel-
+      datenträger) meldet der Fortschritt jetzt die vom Gerät
+      quittierten Bytes aus dem sysfs-Write-Counter — innerhalb der
+      Throttle-Schleife UND in einer Drain-Phase nach dem Schreib-
+      Loop, sodass der Balken kontinuierlich mit echter Schreib-
+      geschwindigkeit läuft und das Ende nicht bei fast-voll parkt
+- [x] Alle Klicks tot nach Maus-Seitentasten (Zurück/Vor): GTK legt
+      bei JEDEM Button-Press einen impliziten Pointer-Focus-Grab an,
+      räumt ihn aber nur bei Release von Button 1-5 auf — jeder
+      8/9-Klick leakt einen Grab, der danach alle normalen Klicks
+      schluckt (Hover läuft weiter, Zurück/Vor auch, weil sie am
+      Grab vorbei gehen). Der alte Workaround (unsichtbares Popover
+      am Tab-Widget) versagte, sobald das stale Grab-Target ein
+      VORFAHR des Popovers war — z. B. der Paned-Divider, der
+      Tab-Container selbst, alles darüber — und ein Press auf ein
+      Sidebar-Level-Target ließ den tab-scoped Controller blind
+      werden. Jetzt lebt der Seitentasten-Controller am Toplevel
+      (sieht 8/9-Events egal wohin der Grab retargetet) und das
+      Revoke-Popover hängt am Fenster — nur ein stale Target direkt
+      am Window-Widget könnte ihn noch schlagen, was Picking
+      praktisch nie liefert. Verifiziert unter Xvfb: Button-8 auf
+      dem Paned-Divider fror die alte Binary komplett ein; der
+      gefixte Build liefert Klicks weiterhin
+- [x] Flackern + Absturz bei Update-Stürmen: Der file_view-Monitor
+      tauschte bei jedem debounced Event die komplette
+      GtkDirectoryList — sichtbares Neu-Aufploppen aller Zeilen und
+      bei Datei-Flut (Kernel-Build) Main-Loop-Verhungern. Ersetzt
+      durch src/dir_model: eigener ListStore + FileMonitor,
+      Changed/Created/Deleted/Moved-Events aktualisieren einzelne
+      Zeilen per async query_info (Trailer-Timer pro Pfad, >64
+      anstehende Pfade eskalieren), strukturelle Events debouncen in
+      eine async Re-Enumeration + minimale Splice-Diffs — kein
+      Flackern, Selektion und Scroll-Position überleben
+- [x] Kopieren zwischen Fenstern blockierte beide Fenster: zwei
+      ineinandergreifende Ursachen — das Fortschrittsfenster war
+      .modal(true) (labwc grabbt den Fokus für die Transient-Gruppe)
+      und, der eigentliche Blocker, der Changed-Event →
+      Komplett-Rebuild-Sturm pro Kopiervorgang ließ den Main-Loop
+      verhungern. Modal entfernt; der Rebuild-Sturm ist mit DirModel
+      (s. o.) weg
+- [x] Kompaktansicht: kein Kontextmenü bei Rechtsklick ins Leere —
+      attach_background_menu + attach_empty_click_clear fehlten auf
+      dem kompakten ColumnView schlicht; jetzt wie Listen-/Symbol-
+      ansicht verdrahtet
+- [x] org.freedesktop.FileManager1-D-Bus-Interface implementiert
+      (src/filemanager1.rs): besitzt den bekannten Namen auf dem
+      Session-Bus (laufende Instanz gewinnt gegenüber Aktivierung),
+      exportiert ShowItems (öffnet das Elternverzeichnis + selektiert
+      den Eintrag über eine Pending-Selektion, die greift sobald die
+      Enumeration die Zeile liefert), ShowFolders (Fenster + Tabs),
+      ShowItemProperties. Liefert
+      data/org.freedesktop.FileManager1.service mit (Exec=valkyrie
+      --gapplication-service, wird gehalten solange es den Namen
+      besitzt) — „Datei anzeigen" in Firefox erreicht jetzt Valkyrie
 - [x] Terminal-Panel cd-Injection: Das Panel folgte der Navigation,
       indem es `cd` in die Eingabe der laufenden Shell fütterte —
       bei halb getipptem Befehl am Prompt landete das injizierte
