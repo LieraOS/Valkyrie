@@ -45,7 +45,7 @@ darunter, nur GTK4, GIO und Rust.
   Tastendruck bricht den vorherigen Lauf ab; bleibt auf dem
   Start-Dateisystem, folgt nie verlinkten Verzeichnissen
 - Zoom-Regler in der Statusleiste; Icon-Größe wird pro Verzeichnis
-  in GVFS-Metadaten gespeichert
+  in ~/.config/ragnar-settings/valkyrie-zoom.ini gespeichert
 - Live-Verzeichnisansicht: neue Dateien erscheinen sofort (eigener
   debounced GFileMonitor — GtkDirectoryLists interner Monitor
   verwirft ins-Verzeichnis-verschobene Events wie Browser-Download-

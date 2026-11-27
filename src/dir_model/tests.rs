@@ -103,6 +103,7 @@ fn overwrite_updates_row_in_place() {
         .with_thread_default(|| {
             let model = DirModel::new(&location);
             spin(&ctx, 5, || model.store.n_items() == 1);
+            let before = row_for(&model.store, "logo.png");
             let p = path.clone();
             std::thread::spawn(move || {
                 std::thread::sleep(Duration::from_millis(150));
@@ -113,11 +114,19 @@ fn overwrite_updates_row_in_place() {
                     && row_for(&model.store, "logo.png")
                         .map(|fo| fo.size_raw() == 512)
                         .unwrap_or(false)
-            })
+            }) && before
+                // GTK4 rebinds rows only on a new item pointer — the
+                // update must swap the FileObject, not mutate it.
+                .map(|old| {
+                    row_for(&model.store, "logo.png")
+                        .map(|now| now != old)
+                        .unwrap_or(false)
+                })
+                .unwrap_or(false)
         })
         .unwrap_or(false);
     std::fs::remove_dir_all(&dir).ok();
-    assert!(updated, "overwrite must update the row in place");
+    assert!(updated, "overwrite must replace the row's FileObject");
 }
 
 /// Deleted files drop their row through the same targeted path —

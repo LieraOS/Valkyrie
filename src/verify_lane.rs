@@ -47,6 +47,7 @@ impl VerifyLane {
         let pending = Arc::new((Mutex::new(0usize), Condvar::new()));
         let pending_w = pending.clone();
         std::thread::spawn(move || {
+            crate::job_priority::background();
             while let Ok(job) = rx.recv() {
                 // A cancel during the copy aborts the whole batch;
                 // verifying leftovers would only stall shutdown.

@@ -4,12 +4,12 @@
 //
 // Minimal-diff application of a fresh directory listing onto the
 // live store: rows that vanished are removed (descending positions
-// keep indices valid), rows that changed swap their FileInfo in
-// place with a 1-item items_changed, and brand-new entries append
-// in one batch. Rows that did not change emit no signal at all —
-// that is what kills the visible re-population flicker the old
-// swap-a-fresh-DirectoryList refresh produced on every monitor
-// event.
+// keep indices valid), rows that changed are spliced for a fresh
+// FileObject (GTK4 rebinds only on a new item pointer), and
+// brand-new entries append in one batch. Rows that did not change
+// emit no signal at all — that is what kills the visible
+// re-population flicker the old swap-a-fresh-DirectoryList refresh
+// produced on every monitor event.
 
 use std::collections::{HashMap, HashSet};
 
@@ -67,11 +67,12 @@ pub fn apply(store: &gio::ListStore, parent: &gio::File, infos: Vec<gio::FileInf
                     .and_then(|o| o.downcast::<FileObject>().ok())
                 {
                     if !fo.same_state(info) {
-                        fo.set_info(info);
-                        // 1-for-1 change notice: the row rebinds with
-                        // the fresh attributes and the sorter/filter
-                        // re-evaluate just this entry.
-                        store.items_changed(pos, 1, 1);
+                        // Splice a fresh FileObject: GTK4 list views
+                        // rebind reliably only when the item pointer
+                        // changes — a same-object items_changed can
+                        // leave stale text in the row. The sorter and
+                        // filter re-evaluate the replaced entry anyway.
+                        store.splice(pos, 1, &[FileObject::new(&parent.child(&name), Some(info))]);
                     }
                 }
             }

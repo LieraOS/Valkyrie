@@ -284,6 +284,7 @@ fn start_count(dir: gio::File, label: gtk4::Label) {
     let shared = Arc::new(Mutex::new(None::<(u64, u64)>));
     let shared2 = shared.clone();
     std::thread::spawn(move || {
+        crate::job_priority::background();
         let mut items = 0u64;
         let mut bytes = 0u64;
         walk(&dir, &mut items, &mut bytes);

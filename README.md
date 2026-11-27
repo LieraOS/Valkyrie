@@ -41,7 +41,7 @@ just GTK4, GIO and Rust.
   the previous run; stays on the starting filesystem, never follows
   symlinked directories
 - Zoom slider in the status bar; icon size remembered per directory
-  in GVFS metadata
+  in ~/.config/ragnar-settings/valkyrie-zoom.ini
 - Live directory view: new files appear instantly (own debounced
   GFileMonitor — GtkDirectoryList's internal monitor drops
   moved-into-dir events like browser download renames), while

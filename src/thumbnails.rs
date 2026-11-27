@@ -97,20 +97,25 @@ fn job_queue() -> &'static mpsc::Sender<(u64, Work)> {
         let shared_rx = Arc::new(Mutex::new(job_rx));
         for _ in 0..WORKERS {
             let rx = shared_rx.clone();
-            std::thread::spawn(move || loop {
-                // Lock only around recv — job execution stays unlocked,
-                // so WORKERS jobs genuinely run in parallel.
-                let job = match rx.lock().map(|r| r.recv()) {
-                    Ok(Ok(job)) => job,
-                    // Queue poisoned or closed — the app is exiting.
-                    _ => return,
-                };
-                let (id, work) = job;
-                let bytes = match work {
-                    Work::Read { path, file, ct } => generate::read_cached_or(&path, &file, &ct),
-                    Work::Fresh { file, ct } => generate::exec_fresh(&file, &ct),
-                };
-                glib::idle_add_once(move || deliver(id, bytes));
+            std::thread::spawn(move || {
+                crate::job_priority::background();
+                loop {
+                    // Lock only around recv — job execution stays unlocked,
+                    // so WORKERS jobs genuinely run in parallel.
+                    let job = match rx.lock().map(|r| r.recv()) {
+                        Ok(Ok(job)) => job,
+                        // Queue poisoned or closed — the app is exiting.
+                        _ => return,
+                    };
+                    let (id, work) = job;
+                    let bytes = match work {
+                        Work::Read { path, file, ct } => {
+                            generate::read_cached_or(&path, &file, &ct)
+                        }
+                        Work::Fresh { file, ct } => generate::exec_fresh(&file, &ct),
+                    };
+                    glib::idle_add_once(move || deliver(id, bytes));
+                }
             });
         }
         job_tx

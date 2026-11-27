@@ -38,6 +38,7 @@ pub fn copy_move(parent: &gtk4::Widget, sources: Vec<gio::File>, dest: gio::File
     let verify_flag = (!cut).then(super::new_verify_flag);
     let (tx, cancel) = spawn_impl(parent, &title, verify_flag.clone());
     std::thread::spawn(move || {
+        crate::job_priority::background();
         // Measure once so the bar can show real byte progress.
         // Best effort: unreadable subtrees shrink the denominator.
         let mut totals = Vec::with_capacity(sources.len());
@@ -278,6 +279,7 @@ pub fn delete(parent: &gtk4::Widget, sources: Vec<gio::File>, wipe_passes: u32) 
     let title = tr("Deleting…");
     let (tx, cancel) = spawn_impl(parent, &title, None);
     std::thread::spawn(move || {
+        crate::job_priority::background();
         let mut total = 0i64;
         for src in &sources {
             total += tree_ops::measure_items(src, &cancel);

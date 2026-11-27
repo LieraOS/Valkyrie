@@ -133,6 +133,7 @@ pub fn run<R>(
 /// the shared fast path. Cancelling the operation or a sibling
 /// worker's error ends the loop.
 fn worker_loop(shared: Arc<Shared>, cfg: Arc<PoolCfg>) {
+    crate::job_priority::background();
     loop {
         let job = {
             let Ok(mut q) = shared.deque.lock() else {

@@ -89,6 +89,7 @@ pub fn sync_pair(parent: &gtk4::Widget, pair: &SyncPair, quiet: bool) {
                 (Some(tx), c)
             };
             std::thread::spawn(move || {
+                crate::job_priority::background();
                 let send = |msg: progress::Msg| {
                     if let Some(tx) = &tx {
                         let _ = tx.send(msg);

@@ -69,18 +69,6 @@ impl FileObject {
         self.imp().info.borrow().clone()
     }
 
-    /// Swap in freshly queried attributes. The live directory model
-    /// calls this right before a 1-item items_changed so every cached
-    /// accessor (size, mtime, type, hidden) reads the new state.
-    /// sort_key and is_dot are recomputed alongside — a rename of
-    /// this entry produces a new FileObject elsewhere, so they only
-    /// differ here when a backend reports a new display name.
-    pub fn set_info(&self, info: &gio::FileInfo) {
-        *self.imp().info.borrow_mut() = Some(info.clone());
-        *self.imp().sort_key.borrow_mut() = self.display_name().to_lowercase();
-        self.imp().is_dot.set(self.raw_name().starts_with('.'));
-    }
-
     /// True when the displayed attributes still match `info` — the
     /// dir model's diff relies on it: unchanged rows emit no signal
     /// at all, so refreshes never re-populate the view visibly.

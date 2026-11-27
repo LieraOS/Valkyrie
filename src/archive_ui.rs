@@ -32,6 +32,7 @@ pub fn extract_here(parent: &gtk4::Widget, archive: &gio::File) {
     let result_slot = std::sync::Arc::new(std::sync::Mutex::new(None::<Result<(), String>>));
     let slot2 = result_slot.clone();
     std::thread::spawn(move || {
+        crate::job_priority::background();
         // Extract into a temp dir on the SAME filesystem as dest so
         // rename works (no EXDEV). We create a hidden dir next to dest.
         let tmp = dest.join(format!(".valkyrie-extract-{}", std::process::id()));
@@ -180,6 +181,7 @@ pub fn compress_dialog(parent: &gtk4::Widget, files: &[gio::File]) {
         let result_slot = std::sync::Arc::new(std::sync::Mutex::new(None::<Result<(), String>>));
         let slot2 = result_slot.clone();
         std::thread::spawn(move || {
+            crate::job_priority::background();
             let src_refs: Vec<&std::path::Path> = sources.iter().map(|p| p.as_path()).collect();
             *slot2.lock().unwrap() = Some(crate::archive::compress(&src_refs, &dest_path, ext));
         });

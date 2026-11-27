@@ -206,7 +206,10 @@
 - [x] New Folder / New Document (empty + ~/Templates) with name dialog
 - [x] Icon view as default; 64 px themed icons
 - [x] Tab bar auto-hidden while a single tab exists
-- [x] Zoom slider (status bar), per-directory size via GVFS metadata
+- [x] Zoom slider (status bar), per-directory size persisted in
+      ~/.config/ragnar-settings/valkyrie-zoom.ini — GVFS metadata
+      dropped: gvfsd-metadata can spin under write load and stall
+      every app's synchronous metadata D-Bus call
       `metadata::valkyrie-icon-size`, GSettings fallback `icon-size`
 - [x] Sidebar activation fix (GTK4 rows need activatable=true),
       volume rows mount on click, device order stable across rebuilds

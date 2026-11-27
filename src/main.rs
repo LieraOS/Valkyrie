@@ -21,6 +21,7 @@ mod filemanager1;
 mod fxcfg;
 mod fxlabel;
 mod i18n;
+mod job_priority;
 mod menu_widgets;
 mod menubar;
 mod mode_editor;

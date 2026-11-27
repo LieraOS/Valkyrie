@@ -111,8 +111,13 @@ fn upsert(store: &gio::ListStore, parent: &gio::File, file: &gio::File, info: &g
     match find_row(store, &name) {
         Some((pos, fo)) => {
             if !fo.same_state(info) {
-                fo.set_info(info);
-                store.items_changed(pos, 1, 1);
+                // Replace the item, not its contents: GTK4 list views
+                // rebind reliably only when the item pointer changes —
+                // a same-object items_changed through FilterListModel/
+                // SortListModel can leave the row showing stale text
+                // (observed: old timestamp survived F5 + monitor events
+                // until the tab was reopened).
+                store.splice(pos, 1, &[FileObject::new(&parent.child(&name), Some(info))]);
             }
         }
         None => store.append(&FileObject::new(&parent.child(&name), Some(info))),

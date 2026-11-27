@@ -234,9 +234,11 @@
       Namensdialog
 - [x] Icon-Ansicht als Standard; 64px-Theme-Icons
 - [x] Tableiste auto-ausgeblendet, solange nur ein Tab existiert
-- [x] Zoom-Regler (Statusleiste), Per-Verzeichnis-Größe via GVFS-
-      Metadaten `metadata::valkyrie-icon-size`, GSettings-Fallback
-      `icon-size`
+- [x] Zoom-Regler (Statusleiste), Per-Verzeichnis-Größe persistiert in
+      ~/.config/ragnar-settings/valkyrie-zoom.ini — GVFS-Metadaten
+      entfernt: gvfsd-metadata kann unter Schreiblast spinnen und
+      blockiert dann alle synchronen Metadata-D-Bus-Aufrufe.
+      GSettings-Fallback `icon-size`
 - [x] Sidebar-Aktivierungs-Fix (GTK4-Zeilen brauchen
       activatable=true), Volume-Zeilen mounten bei Klick, Geräte-
       Reihenfolge stabil über Rebuilds

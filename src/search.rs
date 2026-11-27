@@ -172,6 +172,7 @@ fn run_query(tab: &BrowserTab, ui: &SearchUi, query: &str) {
     *ui.cancel.borrow_mut() = Some(cancel.clone());
     let needle = query.to_lowercase();
     std::thread::spawn(move || {
+        crate::job_priority::background();
         // Device id of the search root — recursion stays on this
         // filesystem (find -xdev semantics) so pseudo-filesystems
         // like /proc, /sys, /run and mounted volumes are skipped.
